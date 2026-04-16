@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/user.dart';
 import 'api_service.dart';
 import '../utils/constants.dart';
@@ -45,6 +46,12 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = response.data as Map<String, dynamic>;
       await _saveToken(data['token']);
+
+      // Save FCM token
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await apiService.put('/api/users/profile', data: {'fcmToken': fcmToken});
+      }
       return data;
     }
     throw Exception('Login failed');

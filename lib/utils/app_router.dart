@@ -9,8 +9,15 @@ import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/product_detail_screen.dart';
 import '../screens/cart_screen.dart';
-import '../screens/cart_screen.dart';
 import '../screens/sell_screen.dart';
+import '../screens/seller_screen.dart';
+import '../screens/my_products_screen.dart';
+import '../screens/my_orders_screen.dart';
+import '../screens/my_seller_orders_screen.dart';
+import '../screens/order_detail_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
+import '../screens/seller_detail_screen.dart';
+import '../models/order.dart';
 import '../providers/cart_provider.dart';
 
 // Router configuration
@@ -29,25 +36,64 @@ final GoRouter router = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
-GoRoute(
+    GoRoute(
       path: '/home',
       builder: (context, state) => const HomeScreen(),
     ),
+
     GoRoute(
       path: '/product/:id',
       builder: (context, state) => const ProductDetailScreen(),
     ),
     GoRoute(
       path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) => ProfileScreen(),
     ),
     GoRoute(
+
       path: '/cart',
       builder: (context, state) => const CartScreen(),
     ),
     GoRoute(
       path: '/sell',
       builder: (context, state) => const SellScreen(),
+    ),
+    GoRoute(
+      path: '/seller/:name',
+      builder: (context, state) {
+        final name = state.pathParameters['name']!;
+        return SellerScreen(sellerName: name);
+      },
+    ),
+    GoRoute(
+      path: '/my-products',
+      builder: (context, state) => const MyProductsScreen(),
+    ),
+    GoRoute(
+      path: '/my-orders',
+      builder: (context, state) => const MyOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/my-seller-orders',
+      builder: (context, state) => const MySellerOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/order-detail',
+      builder: (context, state) {
+        final order = state.extra as Order;
+        return OrderDetailScreen(order: order);
+      },
+    ),
+    GoRoute(
+      path: '/seller-detail',
+      builder: (context, state) {
+        final data = state.extra as Map<String, String>;
+        return SellerDetailScreen(
+          sellerNom: data['sellerNom'] ?? 'Vendeur',
+          sellerCompte: data['sellerCompte'] ?? '',
+          sellerLocalisation: data['sellerLocalisation'] ?? '',
+        );
+      },
     ),
   ],
   redirect: (context, state) {

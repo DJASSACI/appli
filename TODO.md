@@ -1,15 +1,24 @@
-# Routes Fonctionnelles - TODO Progress
+# Backend Orders Filtering Fix - Seller sees own products' orders, buyer sees own orders
 
-**Plan approuvé - Étapes:**
-- [x] 1. Créer CartProvider (lib/providers/cart_provider.dart)
-- [x] 2. Créer CartScreen (lib/screens/cart_screen.dart)
-- [x] 3. Ajouter /cart route (app_router.dart)
-- [ ] 4. Ajouter CartProvider à main.dart
-- [x] 5. Fix ProductDetailScreen addToCart
-- [x] 6. Améliorer ProfileScreen
-- [ ] 7. Hot restart & test nav
-- [ ] 8. attempt_completion
+## Status: Planning ✅ Understanding ✅ User Approval ✅
 
-**Progress:** 8/8 complété
+## Steps:
+### 1. Add debug logging ✅ FIXED SYNTAX
+Edit ../djassa-backend/server.js to log:
+- /api/orders/my: req.user.id, total orders, filtered count
+- /api/orders/seller/:sellerId: sellerId, req.user.id, filtered count  
+- /api/orders POST: seller set value
 
-**Hot restart exécuté - Toutes routes fonctionnelles !**
+### 2. Test & Analyze Logs
+Run backend, test screens, share logs
+
+### 3. Fix Bug (if any)
+
+### 4. Remove debug logs
+
+### 5. Final test
+
+### 6. Complete ✅
+
+**Current Progress:** 0/6 steps done (excluding this file)
+

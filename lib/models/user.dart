@@ -8,6 +8,7 @@ class User {
   final String address;
   final String role;
   final String dateInscription;
+  final String? fcmToken;
 
   const User({
     required this.id,
@@ -17,6 +18,7 @@ class User {
     required this.address,
     required this.role,
     required this.dateInscription,
+    this.fcmToken,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class User {
       address: json['address'] ?? '',
       role: json['role'] ?? 'user',
       dateInscription: json['dateInscription'] ?? '',
+      fcmToken: json['fcmToken'],
     );
   }
 
@@ -39,6 +42,7 @@ class User {
     'address': address,
     'role': role,
     'dateInscription': dateInscription,
+    if (fcmToken != null) 'fcmToken': fcmToken,
   };
 }
 

@@ -2,10 +2,16 @@ import 'package:dio/dio.dart';
 import '../utils/constants.dart';
 
 class ApiService {
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  ApiService._internal() {
+    _init();
+  }
+
   late final Dio _dio;
   String? _token;
 
-  ApiService() {
+  void _init() {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -32,6 +38,8 @@ class ApiService {
       },
     ));
   }
+
+  static ApiService get instance => _instance;
 
   void setToken(String token) {
     _token = token;
@@ -67,5 +75,11 @@ class ApiService {
     } catch (e) {
       rethrow;
     }
+  }
+
+static Future<Response> createOrder(Map<String, dynamic> data) async {
+    data['notify_url'] = "https://djassa-backend-imxo.onrender.com/notify";
+    data['transactionId'] = DateTime.now().millisecondsSinceEpoch.toString();
+    return await instance.post(endpointOrders, data: data);
   }
 }

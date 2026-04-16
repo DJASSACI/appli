@@ -23,13 +23,17 @@ class _SellScreenState extends State<SellScreen> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   String? _selectedCategory;
+  String? _selectedPaymentMethod;
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   final _apiService = ApiService();
+  final _vendeurCompteController = TextEditingController();
+  final _paymentAccountController = TextEditingController();
 
   final List<String> _categories = [
-    'Téléphones', 'Ordinateurs', 'Audio', 'Accessoires', 'Tablettes', 'Montres', 'TV', 'Électroménager'
+    'Téléphones', 'Ordinateors', 'Audio', 'Accessoires', 'Tablettes', 'Montres', 'TV', 'Électroménager', 'Autre'
   ];
+
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -41,12 +45,23 @@ class _SellScreenState extends State<SellScreen> {
   }
 
   Future<void> _createProduct() async {
-    if (_formKey.currentState!.validate() && _selectedCategory != null) {
+    if (_formKey.currentState!.validate() && _selectedCategory != null && _selectedPaymentMethod != null) {
       try {
         String imageData = 'https://via.placeholder.com/400x400?text=Product';
         if (_imageFile != null) {
           final bytes = await _imageFile!.readAsBytes();
           imageData = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        }
+
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.user;
+        if (user == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Utilisateur non connecté'), backgroundColor: Colors.red),
+            );
+          }
+          return;
         }
 
         final response = await _apiService.post('/api/products', data: {
@@ -55,6 +70,12 @@ class _SellScreenState extends State<SellScreen> {
           'image': imageData,
           'description': _descriptionController.text,
           'categorie': _selectedCategory!,
+          'vendeur': user.id,
+          'vendeurNom': '${user.nom} ${user.prenom}',
+          'vendeurCompte': _vendeurCompteController.text,
+          'vendeurLocalisation': user.address,
+          'paymentMethod': _selectedPaymentMethod,
+          'paymentAccount': _paymentAccountController.text,
         });
 
         if (response.statusCode == 201) {
@@ -62,8 +83,8 @@ class _SellScreenState extends State<SellScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Produit publié !'), backgroundColor: Colors.green),
             );
-            context.go('/home');
-            Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
+            await Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
+            context.go('/my-products');
           }
         }
       } catch (e) {
@@ -79,15 +100,25 @@ class _SellScreenState extends State<SellScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-  appBar: AppBar(
-    title: const Text('Vendre un produit'),
-    actions: [
-      IconButton(
-        icon: const Icon(Icons.home),
-        onPressed: () => context.go('/home'),
+      appBar: AppBar(
+        title: const Text('Vendre un produit'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home),
+            onPressed: () => context.go('/home'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.inventory_2),
+            tooltip: 'Mes produits',
+            onPressed: () => context.go('/my-products'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.receipt_long),
+            tooltip: 'Mes commandes',
+            onPressed: () => context.go('/my-seller-orders'),
+          ),
+        ],
       ),
-    ],
-  ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -166,6 +197,46 @@ class _SellScreenState extends State<SellScreen> {
                   ),
                   validator: (value) => value!.isEmpty ? 'Requis' : null,
                 ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _vendeurCompteController,
+                  decoration: const InputDecoration(
+                    labelText: 'Numéro téléphone/WhatsApp vendeur *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) => value!.isEmpty || !RegExp(r'^\+?[\d\s-()]+$').hasMatch(value) ? 'Numéro valide requis' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _paymentAccountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Numéro compte paiement vendeur (Mobile Money) *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.account_balance_wallet),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) => value!.isEmpty ? 'Requis pour paiements' : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedPaymentMethod,
+                  decoration: const InputDecoration(
+                    labelText: 'Moyen paiement vendeur *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.payment),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'orange_money', child: Text('Orange Money')),
+                    DropdownMenuItem(value: 'mtn_money', child: Text('MTN Money')),
+                    DropdownMenuItem(value: 'moov_money', child: Text('Moov Money')),
+                    DropdownMenuItem(value: 'wave', child: Text('Wave')),
+                    DropdownMenuItem(value: 'espece', child: Text('Espèce')),
+                  ],
+                  onChanged: (value) => setState(() => _selectedPaymentMethod = value),
+                  validator: (value) => value == null ? 'Choisir moyen' : null,
+                ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: _createProduct,
@@ -186,6 +257,9 @@ class _SellScreenState extends State<SellScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
+    _vendeurCompteController.dispose();
+    _paymentAccountController.dispose();
     super.dispose();
   }
 }
+

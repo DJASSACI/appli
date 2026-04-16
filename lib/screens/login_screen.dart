@@ -27,7 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, authProvider, child) {
             return Form(
               key: _formKey,
-              child: Column(
+              child: SingleChildScrollView(
+                child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
@@ -114,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
+            ),
             );
           },
         ),

@@ -9,7 +9,7 @@ class Product {
   final String categorie;
   final dynamic vendeur;
   final String vendeurNom;
-  final String vendeurCompte;
+  final String vendeurCompte; // Téléphone/WhatsApp vendeur
   final String vendeurLocalisation;
   final String datePublication;
   final bool isActive;

@@ -23,6 +23,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final data = await authService.login(numero: numero, password: password);
+      authService.apiService.setToken(data['token']);
       _user = User.fromJson(data['user']);
       return true;
     } catch (e) {
@@ -53,6 +54,7 @@ class AuthProvider with ChangeNotifier {
         address: address,
         password: password,
       );
+      authService.apiService.setToken(data['token']);
       _user = User.fromJson(data['user']);
       return true;
     } catch (e) {

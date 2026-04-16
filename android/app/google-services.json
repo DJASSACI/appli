@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "964188330291",
+    "project_id": "djassaci-8918d",
+    "storage_bucket": "djassaci-8918d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964188330291:android:fe8ea94f97018a0aef0646",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_13"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBb1XGjz2rOzeaRIjVVNJallPd_sVc4p1c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
