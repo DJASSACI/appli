@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/orders_provider.dart';
 import '../providers/auth_provider.dart';
-import '../services/api_service.dart';
 import '../utils/constants.dart';
-import '../models/order.dart';
-import '../models/product.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MySellerOrdersScreen extends StatefulWidget {
   const MySellerOrdersScreen({super.key});
@@ -28,31 +23,6 @@ class _MySellerOrdersScreenState extends State<MySellerOrdersScreen> {
         await Provider.of<OrdersProvider>(context, listen: false).fetchSellerOrders(authProvider.user!.id.toString());
       }
     });
-  }
-
-  Future<void> _markDelivered(int orderId) async {
-    try {
-      await ApiService().put('/api/orders/$orderId', data: {'statut': 'livree'});
-      
-      // Auto-launch Yango with delivery coords
-      final order = Provider.of<OrdersProvider>(context, listen: false).orders.firstWhere((o) => o.id == orderId);
-      String yangoUrl = 'yango://';
-      if (order.buyerLat != null && order.buyerLng != null) {
-        yangoUrl += '?destination_lat=${order.buyerLat}&destination_lng=${order.buyerLng}';
-      } else if (order.villeCommune?.isNotEmpty == true && order.quartier?.isNotEmpty == true) {
-        yangoUrl += '?destination=${Uri.encodeComponent('${order.nomLivraison}, ${order.quartier}, ${order.villeCommune}')}';
-      }
-      await launchUrl(Uri.parse(yangoUrl));
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Livraison marquée et Yango ouvert avec coords!'), backgroundColor: Colors.green),
-      );
-      Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-      );
-    }
   }
 
   @override
@@ -170,6 +140,12 @@ IconButton(
                             ),
                           ),
                         ),
+                        IconButton(
+                          icon: const Icon(Icons.chat, color: Colors.blue),
+                          tooltip: 'Chat Acheteur',
+                          onPressed: () => context.push('/chat/${order.utilisateurId}', extra: {'name': order.nomCompte ?? 'Acheteur'}),
+                        ),
+
                       ],
                     ),
                     subtitle: Column(
@@ -208,7 +184,8 @@ IconButton(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-  if (order.statut == "en_attente")
+  if (order.statut.toLowerCase() == "en_attente")
+
     const Expanded(
       child: Center(
         child: Text(
@@ -218,7 +195,8 @@ IconButton(
       ),
     ),
 
-  if (order.statut == "payée")
+  if (order.statut.toLowerCase() == "payée")
+
     ElevatedButton.icon(
       onPressed: () async {
         try {
@@ -236,6 +214,10 @@ IconButton(
           }
 
           await launchUrl(Uri.parse(yangoUrl));
+
+          if (!context.mounted) return;
+          await Provider.of<OrdersProvider>(context, listen: false)
+              .fetchSellerOrders(authProvider.user!.id.toString());
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -257,12 +239,17 @@ IconButton(
       label: const Text("Livrer"),
     ),
 
-  if (order.statut == "livree")
+  if (order.statut.toLowerCase() == "livree")
+
     ElevatedButton.icon(
       onPressed: () async {
         try {
           await Provider.of<OrdersProvider>(context, listen: false)
               .confirmDelivery(order.id);
+
+          if (!context.mounted) return;
+          await Provider.of<OrdersProvider>(context, listen: false)
+              .fetchSellerOrders(authProvider.user!.id.toString());
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

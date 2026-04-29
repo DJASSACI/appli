@@ -19,6 +19,9 @@ import '../screens/admin_dashboard_screen.dart';
 import '../screens/seller_detail_screen.dart';
 import '../models/order.dart';
 import '../providers/cart_provider.dart';
+import '../providers/chat_provider.dart';
+import '../screens/chat_screen.dart';
+import '../screens/privacy_policy_screen.dart';
 
 // Router configuration
 final GoRouter router = GoRouter(
@@ -50,7 +53,6 @@ final GoRouter router = GoRouter(
       builder: (context, state) => ProfileScreen(),
     ),
     GoRoute(
-
       path: '/cart',
       builder: (context, state) => const CartScreen(),
     ),
@@ -95,6 +97,24 @@ final GoRouter router = GoRouter(
         );
       },
     ),
+    GoRoute(
+      path: '/chat/:otherUserId',
+      builder: (context, state) {
+        final otherUserId = int.parse(state.pathParameters['otherUserId']!);
+        return ChatScreen(
+          otherUserId: otherUserId,
+          otherUserName: (state.extra as Map<String, dynamic>?)?['name'] ?? 'Utilisateur',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/admin-dashboard',
+      builder: (context, state) => const AdminDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/privacy-policy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
   ],
   redirect: (context, state) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -108,10 +128,10 @@ final GoRouter router = GoRouter(
     if (!authProvider.isAuthenticated && 
         state.uri.path != '/login' && 
         state.uri.path != '/register' && 
-        state.uri.path != '/splash') {
+        state.uri.path != '/splash' &&
+        state.uri.path != '/privacy-policy') {
       return '/login';
     }
     return null;
   },
 );
-

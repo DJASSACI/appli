@@ -127,6 +127,20 @@ class OrderDetailScreen extends StatelessWidget {
                       trailing: Text(product.vendeurLocalisation ?? ''),
                     );
                   }).toList(),
+                  ListTile(
+                    dense: true,
+                    title: const Text('Contacter Vendeur'),
+                    leading: const Icon(Icons.chat, color: Colors.blue),
+                    onTap: () {
+                      final firstArt = order.articles.isNotEmpty ? order.articles.first as Map : {};
+                      final productData = Map<String, dynamic>.from(firstArt);
+                      final product = Product.fromJson(productData);
+                      final sellerId = int.tryParse(order.seller ?? '0') ?? 0;
+                      final sellerName = product.vendeurNom ?? 'Vendeur';
+                      context.push('/chat/$sellerId', extra: {'name': sellerName});
+                    },
+                  ),
+
                 ],
               ),
             ),

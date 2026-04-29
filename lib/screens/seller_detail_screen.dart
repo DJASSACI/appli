@@ -103,7 +103,7 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: Text('Avis ${widget.sellerNom}'),
-                        content: const Text('Évaluations à venir...\n\nFonctionnalité en développement.'),
+                        content: const Text('Évaluations à venir...\\n\\nFonctionnalité en développement.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -177,33 +177,29 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
                               padding: const EdgeInsets.all(8.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      product.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                children: [
+                                  Text(
+                                    product.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '${product.price.toStringAsFixed(0)} FCFA',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
                                     ),
-                                    Text(
-                                      '${product.price.toStringAsFixed(0)} FCFA',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                      ),
+                                  ),
+                                  Text(
+                                    product.categorie,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
                                     ),
-                                    Text(
-                                      product.categorie,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -220,4 +216,3 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
     );
   }
 }
-

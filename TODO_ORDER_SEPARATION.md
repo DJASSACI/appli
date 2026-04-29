@@ -1,28 +1,24 @@
-# Separate Buyer/Seller Orders - Plan
+# TODO - Séparation des commandes Vendeur/Acheteur
 
-## Information Gathered:
-- **Backend** (`server.js`): 
-  - ✅ POST /api/orders sets `utilisateurId` (buyer) + `seller` (from product.vendeur)
-  - ✅ GET /api/orders/my → filters `o.utilisateurId === req.user.id` (buyer)
-  - ✅ GET /api/orders/seller/:sellerId → filters `order.seller === sellerId` OR legacy articles
-  - PUT /api/orders/:id/confirm-delivery checks seller owns product in order
-- **Frontend**:
-  - ✅ `my_orders_screen.dart` calls `fetchMyOrders()` → `/api/orders/my`
-  - ✅ `my_seller_orders_screen.dart` calls `fetchSellerOrders()` → `/api/orders/seller/:id`
-  - ✅ Model `Order` has `utilisateurId`, `seller`
-- **Status**: Already correctly separated! Backend stores `buyerId` (utilisateurId) + `sellerId` (seller)
+## Étape 1: Backend - Création de commandes par vendeur (server.js)
+- [ ] Modifier `POST /api/orders` pour grouper les articles par vendeur et créer une commande par vendeur
+- [ ] Corriger `GET /api/orders/seller/:sellerId` avec normalisation des types int/string
+- [ ] Corriger `GET /api/orders/my` avec comparaison numérique stricte
+- [ ] Restreindre `GET /api/orders` à admin uniquement
+- [ ] Corriger `PUT /api/orders/:id/deliver` pour vérifier ownership vendeur
+- [ ] Corriger `PUT /api/orders/:id/confirm-delivery` pour vérifier ownership vendeur
 
-## No Changes Needed:
-```
-Buyer (/my_orders_screen): Sees only utilisateurId === my ID ✅
-Seller (/my_seller_orders_screen): Sees only seller === my ID ✅
-Order Creation: Auto-sets seller from product.vendeur ✅
-```
+## Étape 2: Frontend - Écran vendeur (my_seller_orders_screen.dart)
+- [ ] Filtrer les articles pour n'afficher que ceux du vendeur connecté
+- [ ] Calculer et afficher le sous-total pour le vendeur (pas le total global)
+- [ ] Masquer les boutons d'action si le vendeur n'a pas d'articles dans la commande
 
-**Test**: 
-```
-1. User A buys from Seller B → Order has utilisateurId=A, seller=B
-2. A sees in my_orders ✅ B sees in my_seller_orders ✅
-```
+## Étape 3: Frontend - Provider (orders_provider.dart)
+- [ ] Vérifier que `fetchSellerOrders` utilise le bon endpoint
+- [ ] Vérifier que `fetchMyOrders` fonctionne correctement
 
-## Followup: Run `node ../djassa-backend/server.js` + `flutter run` to verify separation works perfectly.
+## Étape 4: Test et vérification
+- [ ] Vérifier qu'un vendeur ne voit que ses commandes
+- [ ] Vérifier qu'un acheteur ne voit que ses commandes
+- [ ] Vérifier que les anciennes commandes legacy sont encore supportées
+

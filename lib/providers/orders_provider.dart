@@ -56,8 +56,7 @@ class OrdersProvider with ChangeNotifier {
 
   Future<void> markDelivered(int orderId) async {
     try {
-      await apiService.put('/api/orders/$orderId', data: {'statut': 'livree'});
-      await fetchOrders();
+      await apiService.put('/api/orders/$orderId/deliver');
       notifyListeners();
     } catch (e) {
       throw e;
@@ -67,7 +66,7 @@ class OrdersProvider with ChangeNotifier {
   Future<void> confirmDelivery(int orderId) async {
     try {
       await apiService.put('/api/orders/$orderId/confirm-delivery');
-      await fetchOrders(); // Refresh orders
+      notifyListeners();
     } catch (e) {
       throw e; // Let caller handle error
     }

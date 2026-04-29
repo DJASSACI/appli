@@ -110,6 +110,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: true,
                     validator: (value) => value!.length < 6 ? 'Min 6 caractères' : null,
                   ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => context.go('/privacy-policy'),
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'En vous inscrivant, vous acceptez notre ',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        children: [
+                          TextSpan(
+                            text: 'politique de confidentialité',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,

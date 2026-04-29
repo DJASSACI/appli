@@ -325,10 +325,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: product.vendeurCompte.isNotEmpty ? () => launchUrl(
-                                    Uri.parse('whatsapp://send?phone=${product.vendeurCompte}'),
-                                    mode: LaunchMode.externalApplication,
-                                  ) : null,
+                                  onPressed: product.vendeurCompte.isNotEmpty ? () {
+                                    final message = 'Je suis intéressé par ${product.name} quantite 1 et photo du produit ${product.description}';
+                                    launchUrl(
+                                      Uri.parse('whatsapp://send?phone=${product.vendeurCompte}&text=${Uri.encodeComponent(message)}'),
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } : null,
                                   icon: const Icon(Icons.chat),
                                   label: const Text('WhatsApp'),
                                   style: ElevatedButton.styleFrom(
@@ -338,6 +341,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                               ),
                             ],
+
                           ),
                           const SizedBox(height: 12),
                           SizedBox(

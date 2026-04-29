@@ -13,6 +13,8 @@ import 'screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'providers/chat_provider.dart';
+
 
 
 void main() async {
@@ -51,7 +53,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductsProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
+
       child: MaterialApp.router(
         title: 'Djassa CI',
         theme: appTheme(),

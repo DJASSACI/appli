@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../utils/constants.dart';
 import '../models/product.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -16,9 +17,9 @@ class MyProductsScreen extends StatefulWidget {
 }
 
 class _MyProductsScreenState extends State<MyProductsScreen> {
-  Future<void> _deleteProduct(int productId) async {
+Future<void> _deleteProduct(int productId) async {
     try {
-      await ApiService().delete('/api/products/$productId');
+      await ApiService.instance.delete('/api/products/$productId');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Produit supprimé !'), backgroundColor: Colors.green),
       );
@@ -39,6 +40,19 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           IconButton(
             icon: const Icon(Icons.sell),
             onPressed: () => context.go('/sell'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.link),
+            onPressed: () async {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final link = '${Uri.base.origin}/seller/${authProvider.user!.nom.toLowerCase().replaceAll(' ', '-')}';
+              await Clipboard.setData(ClipboardData(text: link));
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Lien boutique copié !'), backgroundColor: Colors.green),
+                );
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.home),

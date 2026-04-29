@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 
@@ -88,8 +90,23 @@ class ProfileScreen extends StatelessWidget {
                 label: const Text('Dashboard'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
               ),
-
-
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.lock, color: Colors.orange),
+                title: const Text('Politique de confidentialité'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/privacy-policy'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.support_agent, color: Colors.orange),
+                title: const Text('Support / Contact'),
+                subtitle: const Text('0715926401'),
+                trailing: const Icon(Icons.phone),
+                onTap: () => launchUrl(Uri.parse('tel:0715926401')),
+              ),
+            ),
           ],
         ),
     );

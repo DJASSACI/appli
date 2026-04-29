@@ -25,7 +25,8 @@ class ProductsProvider with ChangeNotifier {
     try {
       final response = await apiService.get(endpointProducts);
       if (response.statusCode == 200) {
-        _products = (response.data as List).map((json) => Product.fromJson(json)).toList();
+        final allProducts = (response.data as List).map((json) => Product.fromJson(json)).toList();
+        _products = allProducts.where((p) => p.isActive == true).toList();
         _filteredProducts = List.from(_products);
       } else {
         _error = 'Erreur serveur: ${response.statusCode}';

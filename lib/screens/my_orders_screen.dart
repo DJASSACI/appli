@@ -81,9 +81,25 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     child: Text('\$${order.total.toStringAsFixed(0)}'),
                   ),
 title: Text('Commande #${order.id}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.visibility),
-              onPressed: () => context.push('/order-detail', extra: order),
+            trailing: Wrap(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility),
+                  onPressed: () => context.push('/order-detail', extra: order),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chat, color: Colors.blue),
+                  tooltip: 'Chat Vendeur',
+                  onPressed: () {
+                    final firstArt = order.articles.isNotEmpty ? order.articles.first as Map : {};
+                    final productData = Map<String, dynamic>.from(firstArt);
+                    final product = Product.fromJson(productData);
+                    final sellerId = int.tryParse(order.seller ?? '0') ?? 0;
+                    final sellerName = product.vendeurNom ?? 'Vendeur';
+                    context.push('/chat/$sellerId', extra: {'name': sellerName});
+                  },
+                ),
+              ],
             ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

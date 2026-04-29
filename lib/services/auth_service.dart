@@ -45,13 +45,22 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = response.data as Map<String, dynamic>;
-      await _saveToken(data['token']);
+      final token = data['token'] as String;
+      
+      // Save token and configure API service
+      await _saveToken(token);
+      apiService.setToken(token);
 
-      // Save FCM token
-      String? fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken != null) {
-        await apiService.put('/api/users/profile', data: {'fcmToken': fcmToken});
+      // Save FCM token (non-blocking)
+      try {
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await apiService.put('/api/users/profile', data: {'fcmToken': fcmToken});
+        }
+      } catch (e) {
+        print('FCM token save error (non-blocking): $e');
       }
+      
       return data;
     }
     throw Exception('Login failed');
