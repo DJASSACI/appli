@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 import '../models/product.dart';
 import 'package:go_router/go_router.dart';
+import 'payment_screen.dart';
+
+import '../widgets/back_arrow.dart';
+
+
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -105,7 +111,41 @@ class _CartScreenState extends State<CartScreen> {
         'transactionId': DateTime.now().millisecondsSinceEpoch.toString(),
       };
 
-      await ApiService.createOrder(data);
+      final res = await ApiService.createOrder(data);
+
+      // Extraire orderId pour passer au paiement GeniusPay
+      String? createdOrderId;
+      final responseData = res.data;
+      if (responseData is Map<String, dynamic>) {
+        final order = responseData['order'];
+        if (order is Map<String, dynamic>) {
+          createdOrderId = order['id']?.toString();
+        }
+        createdOrderId ??= responseData['orderId']?.toString();
+        createdOrderId ??= responseData['id']?.toString();
+      }
+
+      // Navigation additionnelle vers PaymentScreen (sans supprimer la redirection profile existante)
+      if (createdOrderId != null && createdOrderId.isNotEmpty && mounted) {
+        final amount = cartProvider.totalAmount.toInt();
+        final phone = _phoneController.text;
+        final name = _accountController.text;
+
+        // Ouvrir directement l'écran de paiement, et éviter qu'il disparaisse
+        // à cause de la redirection /profile.
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => PaymentScreen(
+              amount: amount,
+              phone: phone,
+              orderId: createdOrderId!,
+              name: name,
+            ),
+          ),
+        );
+
+        return;
+      }
 
       cartProvider.clear();
       _phoneController.clear();
@@ -127,6 +167,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
       );
 
+      if (!mounted) return;
       GoRouter.of(context).go('/profile');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +180,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: const Text('Panier'),
         actions: [
           IconButton(
@@ -246,7 +288,48 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
               ),
+                      const SizedBox(height: 16),
+              // Commander sur WhatsApp
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Exemple basé sur le contenu du panier
+                      final cart = cartProvider.items;
+                      final productLines = cart.map((item) {
+                        return '${item.product.name} (Quantité : ${item.quantity})';
+                      }).join('\n');
+
+                      final totalLine = 'Montant total : ${cartProvider.totalAmount.toStringAsFixed(0)} $currencySymbol';
+
+                      // NB: on ne dépend pas de l’éditeur ci-dessus, on suit exactement le message demandé
+                      final message = 'Bonjour,\n\nJe souhaite commander les articles suivants sur Djassa CI :\n'
+                          '$productLines\n\n'
+                          '$totalLine\n\nMerci de me confirmer la disponibilité des produits ainsi que les modalités de livraison.\n\nCordialement.';
+
+                      // Route vers le WhatsApp du vendeur (on prend le vendeur du premier item)
+                      final sellerPhone = cart.isNotEmpty ? cart.first.product.vendeurCompte : '';
+                      if (sellerPhone.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Numéro vendeur introuvable')),
+                        );
+                        return;
+                      }
+
+                      final url = Uri.parse('whatsapp://send?phone=$sellerPhone&text=${Uri.encodeComponent(message)}');
+                      // ignore: avoid_print
+                      launchUrl(url);
+                    },
+                    icon: const Icon(Icons.message_outlined),
+                    label: const Text('Commander sur WhatsApp'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
+
               // Payment selection
               Card(
                 child: Padding(
@@ -255,6 +338,7 @@ class _CartScreenState extends State<CartScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('Méthode de paiement:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
                       DropdownButtonFormField<String>(
                         value: _paymentMethod,
                         decoration: const InputDecoration(
@@ -354,34 +438,34 @@ class _CartScreenState extends State<CartScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isGettingLocation ? null : _getCurrentLocation,
-                          icon: _isGettingLocation 
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Icon(Icons.my_location),
-                          label: Text(_isGettingLocation ? 'Obtention GPS...' : 'Obtenir ma position GPS'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                          ),
-                        ),
-                      ),
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   child: ElevatedButton.icon(
+                      //     onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                      //     icon: _isGettingLocation
+                      //       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      //       : const Icon(Icons.my_location),
+                      //     label: Text(_isGettingLocation ? 'Obtention GPS...' : 'Obtenir ma position GPS'),
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: Colors.blue,
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: cartProvider.itemCount > 0 ? () => _placeOrder(cartProvider, context) : null,
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                    child: const Text('Passer la commande', style: TextStyle(fontSize: 18)),
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(16),
+              //   child: SizedBox(
+              //     width: double.infinity,
+              //     child: ElevatedButton(
+              //       onPressed: cartProvider.itemCount > 0 ? () => _placeOrder(cartProvider, context) : null,
+              //       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+              //       child: const Text('Passer la commande', style: TextStyle(fontSize: 18)),
+              //     ),
+              //   ),
+              // ),
             ],
           );
         },
