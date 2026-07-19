@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/orders_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
+import '../widgets/back_arrow.dart';
+
 
 class MySellerOrdersScreen extends StatefulWidget {
   const MySellerOrdersScreen({super.key});
@@ -13,14 +15,17 @@ class MySellerOrdersScreen extends StatefulWidget {
   State<MySellerOrdersScreen> createState() => _MySellerOrdersScreenState();
 }
 
+
 class _MySellerOrdersScreenState extends State<MySellerOrdersScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.loadCurrentUser();
       if (authProvider.isAuthenticated) {
-        await Provider.of<OrdersProvider>(context, listen: false).fetchSellerOrders(authProvider.user!.id.toString());
+        await Provider.of<OrdersProvider>(context, listen: false)
+            .fetchSellerOrders(authProvider.user!.id.toString());
       }
     });
   }
@@ -29,6 +34,7 @@ class _MySellerOrdersScreenState extends State<MySellerOrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: const Text('Mes commandes'),
         actions: [
           IconButton(

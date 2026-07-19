@@ -3,6 +3,8 @@ import '../models/order.dart';
 import '../models/product.dart';
 import '../utils/constants.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/back_arrow.dart';
+
 
 class OrderDetailScreen extends StatelessWidget {
   final Order order;
@@ -13,13 +15,8 @@ class OrderDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: Text('Commande #${order.id}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

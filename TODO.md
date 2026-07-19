@@ -1,7 +1,5 @@
-## Yango Auto-Launch Cleanup TODO
+- [ ] Analyse du login_screen.dart (position des widgets)
+- [ ] Mettre à jour la structure UI pour placer le bouton « Mot de passe oublié ? contacter support! » **entre** le champ mot de passe et le bouton « Se connecter »
+- [ ] Vérifier l’ordre visuel et la mise en page
+- [ ] Lancer l’app / faire un hot-reload pour vérifier le rendu
 
-1. [x] Confirmed plan: Remove duplicate "Livrer" button in my_seller_orders_screen.dart
-2. [] Read file confirmed content
-3. [] Edit file: Remove inline duplicate button for "payée" status (keep _markDelivered call only)
-4. [] Test: flutter run, check seller screen Livrer → Yango opens with buyer info
-5. [] attempt_completion

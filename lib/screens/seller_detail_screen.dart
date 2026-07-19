@@ -5,6 +5,8 @@ import '../providers/products_provider.dart';
 import '../models/product.dart';
 import '../utils/constants.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/back_arrow.dart';
+
 
 class SellerDetailScreen extends StatefulWidget {
   final String sellerNom;
@@ -35,7 +37,9 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: Text(widget.sellerNom),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.phone),
@@ -123,8 +127,20 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
           Expanded(
             child: Consumer<ProductsProvider>(
               builder: (context, productsProvider, child) {
-                final sellerProducts = productsProvider.products
-                    .where((p) => p.vendeurNom == widget.sellerNom)
+final sellerProducts = productsProvider.products
+                    .where((p) {
+                      // Support robuste: filtrer sur vendor name (legacy) ou vendor id (si dispo)
+                      final vendeur = p.vendeur;
+                      final vendeurObj = (vendeur is Map<String, dynamic>) ? vendeur : null;
+                      final sellerIdFromProduct = vendeurObj?['id'];
+                      final sellerNomMatch = p.vendeurNom == widget.sellerNom;
+
+                      // Si le vendeur a un id côté produit, on compare à l’id stocké dans l’argument.
+                      // Sinon on retombe sur le nom.
+                      final sellerIdMatch = sellerIdFromProduct != null && sellerIdFromProduct.toString() == widget.key?.toString();
+
+                      return sellerNomMatch || sellerIdMatch;
+                    })
                     .toList();
                 
                 if (sellerProducts.isEmpty) {
@@ -153,7 +169,10 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> {
                     final product = sellerProducts[index];
                     return Card(
                       child: InkWell(
-                        onTap: () => context.go('/product/${product.id}', extra: product),
+onTap: () => context.push(
+                        '/product/${product.id}',
+                        extra: product,
+                      ),
                         borderRadius: BorderRadius.circular(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

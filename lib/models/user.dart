@@ -9,6 +9,9 @@ class User {
   final String role;
   final String dateInscription;
   final String? fcmToken;
+  final bool? sellerVerified;
+  final String? sellerVerifiedAt;
+
 
   const User({
     required this.id,
@@ -19,6 +22,8 @@ class User {
     required this.role,
     required this.dateInscription,
     this.fcmToken,
+    this.sellerVerified,
+    this.sellerVerifiedAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,6 +36,8 @@ class User {
       role: json['role'] ?? 'user',
       dateInscription: json['dateInscription'] ?? '',
       fcmToken: json['fcmToken'],
+      sellerVerified: (json['sellerVerified'] ?? json['seller_verified']),
+      sellerVerifiedAt: (json['sellerVerifiedAt'] ?? json['seller_verified_at']),
     );
   }
 

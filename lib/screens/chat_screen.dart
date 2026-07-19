@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../utils/colors.dart';
+import '../widgets/back_arrow.dart';
+
+
 
 class ChatScreen extends StatefulWidget {
   final int otherUserId;
@@ -73,6 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: Text(widget.otherUserName),
         backgroundColor: AppColors.primaryColor,
         foregroundColor: Colors.white,

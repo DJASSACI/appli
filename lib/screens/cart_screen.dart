@@ -330,131 +330,119 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Payment selection
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Méthode de paiement:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      // Payment selection (désactivé demandé)
+              // Card(
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(16),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         const Text('Méthode de paiement:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              //
+              //         DropdownButtonFormField<String>(
+              //           value: _paymentMethod,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Sélectionnez',
+              //             border: OutlineInputBorder(),
+              //           ),
+              //           items: paymentOptions.map((String option) {
+              //             return DropdownMenuItem<String>(
+              //               value: option,
+              //               child: Text(option),
+              //             );
+              //           }).toList(),
+              //           onChanged: (String? newValue) {
+              //             setState(() {
+              //               _paymentMethod = newValue;
+              //             });
+              //           },
+              //         ),
+              //         const SizedBox(height: 16),
+              //         TextFormField(
+              //           controller: _phoneController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Numéro téléphone *',
+              //             prefixIcon: Icon(Icons.phone),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //           keyboardType: TextInputType.phone,
+              //         ),
+              //         const SizedBox(height: 8),
+              //         TextFormField(
+              //           controller: _accountController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Nom du compte *',
+              //             prefixIcon: Icon(Icons.account_circle),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //         ),
+              //         const SizedBox(height: 16),
+              //         Text('Coordonnées livraison *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              //         TextFormField(
+              //           controller: _nomLivraisonController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Nom complet *',
+              //             prefixIcon: Icon(Icons.person),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //         ),
+              //         TextFormField(
+              //           controller: _villeCommuneController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Ville/Commune *',
+              //             prefixIcon: Icon(Icons.location_city),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //         ),
+              //         TextFormField(
+              //           controller: _telLivraisonController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Numéro téléphone livraison *',
+              //             prefixIcon: Icon(Icons.phone),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //           keyboardType: TextInputType.phone,
+              //         ),
+              //         TextFormField(
+              //           controller: _quartierController,
+              //           decoration: const InputDecoration(
+              //             labelText: 'Quartier / Adresse *',
+              //             prefixIcon: Icon(Icons.location_on),
+              //             border: OutlineInputBorder(),
+              //           ),
+              //         ),
+              //         const SizedBox(height: 8),
+              //         Row(
+              //           children: [
+              //             Expanded(
+              //               child: TextFormField(
+              //                 controller: _buyerLatController,
+              //                 decoration: const InputDecoration(
+              //                   labelText: 'Latitude livraison (optionnel)',
+              //                   border: OutlineInputBorder(),
+              //                 ),
+              //                 keyboardType: TextInputType.numberWithOptions(decimal: true),
+              //               ),
+              //             ),
+              //             const SizedBox(width: 8),
+              //             Expanded(
+              //               child: TextFormField(
+              //                 controller: _buyerLngController,
+              //                 decoration: const InputDecoration(
+              //                   labelText: 'Longitude livraison (optionnel)',
+              //                   border: OutlineInputBorder(),
+              //                 ),
+              //                 keyboardType: TextInputType.numberWithOptions(decimal: true),
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //         const SizedBox(height: 8),
+              //       ],
+              //     ),
+              //   ),
+              // ),
 
-                      DropdownButtonFormField<String>(
-                        value: _paymentMethod,
-                        decoration: const InputDecoration(
-                          labelText: 'Sélectionnez',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: paymentOptions.map((String option) {
-                          return DropdownMenuItem<String>(
-                            value: option,
-                            child: Text(option),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _paymentMethod = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Numéro téléphone *',
-                          prefixIcon: Icon(Icons.phone),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _accountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nom du compte *',
-                          prefixIcon: Icon(Icons.account_circle),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text('Coordonnées livraison *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      TextFormField(
-                        controller: _nomLivraisonController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nom complet *',
-                          prefixIcon: Icon(Icons.person),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      TextFormField(
-                        controller: _villeCommuneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Ville/Commune *',
-                          prefixIcon: Icon(Icons.location_city),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      TextFormField(
-                        controller: _telLivraisonController,
-                        decoration: const InputDecoration(
-                          labelText: 'Numéro téléphone livraison *',
-                          prefixIcon: Icon(Icons.phone),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.phone,
-                      ),
-                      TextFormField(
-                        controller: _quartierController,
-                        decoration: const InputDecoration(
-                          labelText: 'Quartier / Adresse *',
-                          prefixIcon: Icon(Icons.location_on),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _buyerLatController,
-                              decoration: const InputDecoration(
-                                labelText: 'Latitude livraison (optionnel)',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.numberWithOptions(decimal: true),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _buyerLngController,
-                              decoration: const InputDecoration(
-                                labelText: 'Longitude livraison (optionnel)',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.numberWithOptions(decimal: true),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // SizedBox(
-                      //   width: double.infinity,
-                      //   child: ElevatedButton.icon(
-                      //     onPressed: _isGettingLocation ? null : _getCurrentLocation,
-                      //     icon: _isGettingLocation
-                      //       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      //       : const Icon(Icons.my_location),
-                      //     label: Text(_isGettingLocation ? 'Obtention GPS...' : 'Obtenir ma position GPS'),
-                      //     style: ElevatedButton.styleFrom(
-                      //       backgroundColor: Colors.blue,
-                      //     ),
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                ),
-              ),
               // Padding(
               //   padding: const EdgeInsets.all(16),
               //   child: SizedBox(

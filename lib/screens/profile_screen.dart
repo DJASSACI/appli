@@ -146,92 +146,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               const SizedBox(height: 12),
+
               ElevatedButton.icon(
                 onPressed: () async {
+                  final numeroCompte = user.numero.trim();
+                  final nomCompte = user.nom.trim();
+                  final message =
+                      'Bonjour DJASSA CI, je souhaite demander la suppression de mon compte lié au $numeroCompte et $nomCompte ';
+
+                  const phone = '+2250715926401';
+                  final url = Uri.parse(
+                    'whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}',
+                  );
+
+                  await launchUrl(url);
+                },
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Demander la suppression de mon compte'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              ),
+
+              ElevatedButton.icon(
+                onPressed: () async {
+
                   // Refresh seller status before requesting a new certification window
                   try {
                     await ApiService.instance.post('/api/users/refresh-seller-verified', data: {});
                   } catch (_) {}
 
-                  // (Optionnel) on pourrait aussi afficher un message si besoin
+                  // Redirection directe WhatsApp (sans formulaire)
+                  final nomVendeur = user.nom.trim();
+                  final message =
+                      'Bonjour l\'équipe Djassa-ci, je souhaite certifier ma boutique. Voici mon nom de vendeur : $nomVendeur';
 
-
-                  final nomController = TextEditingController();
-                  final numeroController = TextEditingController();
-
-
-                  showDialog(
-                    context: context,
-                  builder: (context) => AlertDialog(
-                      title: const Text('Devenir boutique certifiée'),
-
-                      content: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              controller: nomController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nom de compte',
-                                prefixIcon: Icon(Icons.person),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: numeroController,
-                              decoration: const InputDecoration(
-                                labelText: 'Numéro de compte',
-                                prefixIcon: Icon(Icons.phone),
-                              ),
-                              keyboardType: TextInputType.phone,
-                            ),
-                          ],
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Annuler'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            // On garde l’UI et on remplace juste le flow de redirection.
-                            // Nouveau: ouvrir WhatsApp de l’admin avec un message pré-rempli.
-                            try {
-                              // On ne met pas le nom/numéro dans WhatsApp (selon demande)
-                              // final nomVendeur = nomController.text;
-                              // final numeroCompte = numeroController.text;
-
-                              final message = 'Bonjour l\'équipe Djassa-ci, je souhaite certifier ma boutique.';
-
-                              const adminPhone = '0715926401';
-                              final url = Uri.parse(
-                                'whatsapp://send?phone=$adminPhone&text=${Uri.encodeComponent(message)}',
-                              );
-
-                              if (!context.mounted) return;
-                              Navigator.pop(context);
-                              await launchUrl(url);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Erreur ouverture WhatsApp: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text('Certifier'),
-                        ),
-                      ],
-                    ),
+                  const adminPhone = '+2250715926401';
+                  final url = Uri.parse(
+                    'whatsapp://send?phone=$adminPhone&text=${Uri.encodeComponent(message)}',
                   );
+
+                  await launchUrl(url);
                 },
                 icon: const Icon(Icons.verified_user),
-                label: const Text('Certifier mon compte'),
+                label: const Text('Devenir boutique certifiée'),
               ),
+              
               if (user.role == 'admin')
                 ElevatedButton.icon(
                   onPressed: () => context.go('/admin-dashboard'),
@@ -240,6 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
                 ),
               Card(
+
                 child: ListTile(
                   leading: const Icon(Icons.lock, color: Colors.orange),
                   title: const Text('Politique de confidentialité'),

@@ -8,6 +8,9 @@ import '../utils/constants.dart';
 import '../models/product.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import '../widgets/back_arrow.dart';
+
+
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -17,7 +20,8 @@ class MyProductsScreen extends StatefulWidget {
 }
 
 class _MyProductsScreenState extends State<MyProductsScreen> {
-Future<void> _deleteProduct(int productId) async {
+
+  Future<void> _deleteProduct(int productId) async {
     try {
       await ApiService.instance.delete('/api/products/$productId');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,6 +39,7 @@ Future<void> _deleteProduct(int productId) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: const Text('Mes produits'),
         actions: [
           IconButton(
@@ -61,8 +66,23 @@ Future<void> _deleteProduct(int productId) async {
         ],
       ),
       body: Consumer2<ProductsProvider, AuthProvider>(
-        builder: (context, productsProvider, authProvider, child) {
-          final myProducts = productsProvider.products.where((p) => p.vendeur.toString() == authProvider.user?.id.toString()).toList();
+builder: (context, productsProvider, authProvider, child) {
+            final myProducts = productsProvider.products.where((p) {
+            final user = authProvider.user;
+            if (user == null) return false;
+
+            // Utiliser uniquement l'id vendeur pour éviter les mismatches champs/format.
+final sellerId = user.id?.toString();
+            // Selon les données backend, le champ `vendeur` côté produit peut contenir soit l'id du vendeur,
+            // soit un objet (ex: { id: ..., ...}). On gère les deux cas.
+            final pVendeur = p.vendeur;
+            if (pVendeur is Map<String, dynamic>) {
+              final pid = pVendeur['id']?.toString();
+              return pid != null && pid == sellerId;
+            }
+            return pVendeur.toString() == sellerId;
+          }).toList();
+
 
           if (productsProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());

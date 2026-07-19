@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,7 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.phone,
-                    validator: (value) => value!.isEmpty ? 'Requis' : null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Remplissez tous les champs';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
@@ -75,7 +82,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                     obscureText: true,
-                    validator: (value) => value!.length < 6 ? 'Min 6 caractères' : null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Remplissez tous les champs';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {
+                        final message = Uri.encodeComponent(
+                          'Bonjour l\'équipe DJASSA-CI j\'ai oubliée mon mots de passe et je souhaite la renicialiser',
+                        );
+                        final whatsappUrl =
+                            'https://wa.me/2250715926401?text=$message';
+                        // Direct open WhatsApp with prefilled message
+                        // ignore: deprecated_member_use
+                        launchUrl(Uri.parse(whatsappUrl));
+
+                      },
+                      child: const Text('Mot de passe oublié ? contacter support!'),
+                    ),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(
@@ -123,4 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+
 

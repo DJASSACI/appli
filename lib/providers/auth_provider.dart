@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/user.dart';
 import '../services/auth_service.dart';
 
@@ -27,7 +28,23 @@ class AuthProvider with ChangeNotifier {
       _user = User.fromJson(data['user']);
       return true;
     } catch (e) {
-      _error = e.toString();
+      final msg = e.toString().toLowerCase();
+
+      // Examples:
+      // - "Mot de passe incorrect" (401)
+      // - "Compte introuvable" (ex: 404) / or similar backend messages
+      final isAccountNotFound = msg.contains('compte') && (msg.contains('introuv') || msg.contains('not found') || msg.contains('absent'));
+      if (isAccountNotFound) {
+        _error = 'compte introuvable';
+        return false;
+      }
+
+      if (msg.contains('mot de passe') || msg.contains('password') || msg.contains('incorrect') || msg.contains('credential')) {
+        _error = 'Mot de passe incorrect';
+        return false;
+      }
+
+      _error = 'Mot de passe ou numéro incorrect';
       return false;
     } finally {
       _isLoading = false;
@@ -63,6 +80,49 @@ class AuthProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // ===== Methods referenced by splash/main =====
+
+  Future<void> loadUserFromStorage() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final localUser = await authService.getUserFromLocalStorage();
+      _user = localUser;
+    } catch (_) {
+      _user = null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool get hasLocalSession => _user != null;
+
+  Future<bool> hasLocalSessionAsync() async {
+    return await authService.hasLocalUser();
+  }
+
+  void setUserFromSession(Map<String, dynamic> userData) {
+    _user = User.fromJson(userData);
+    notifyListeners();
+  }
+
+  Future<void> refreshUserInBackground() async {
+    try {
+      final freshUser = await authService.getCurrentUser();
+      if (freshUser == null) return;
+
+      _user = freshUser;
+      notifyListeners();
+
+      // Persist user data if desired
+      await authService.storageService.saveUserData(freshUser.toJson());
+    } catch (_) {
+      // non-blocking
     }
   }
 

@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'product_detail_screen.dart';
 
+import '../widgets/back_arrow.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -33,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: null,
         title: const Text('Djassa CI - Produits'),
         actions: [
           IconButton(
@@ -199,7 +202,7 @@ class _ProductCardState extends State<_ProductCard> {
   }
 
   Future<void> _showQuickBuyDialog(BuildContext context, Product product) async {
-_paymentMethod = null;
+    _paymentMethod = null;
     _buyerLat = null;
     _buyerLng = null;
     _phoneController.clear();
@@ -296,7 +299,10 @@ _paymentMethod = null;
             flex: 3,
             child: InkWell(
               onTap: () {
-                context.go('/product/${widget.product.id}', extra: widget.product);
+context.push(
+                '/product/${widget.product.id}',
+                extra: widget.product,
+              );
               },
               borderRadius: BorderRadius.circular(12),
               child: ClipRRect(

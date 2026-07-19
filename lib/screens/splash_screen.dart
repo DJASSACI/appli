@@ -20,39 +20,47 @@ class _SplashScreenState extends State<SplashScreen> {
     _initializeAuth();
   }
 
-  Future<void> _initializeAuth() async {
+Future<void> _initializeAuth() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
-    // Show logo briefly
-    await Future.delayed(const Duration(seconds: 1));
+    // Step 1: Instantly restore session from local storage (no API call)
+    await authProvider.loadUserFromStorage();
+    
+    // Step 2: Show logo briefly  
+    await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
     
-    try {
-      // Wait for full auth restoration (no timeout - ensure complete)
-      await authProvider.loadCurrentUser();
-      
-      // Also preload products for smoother home screen
-      final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
-      await productsProvider.fetchProducts();
-      
-      if (!mounted) return;
-      
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          if (authProvider.isAuthenticated) {
-            context.go('/home');
-          } else {
-            context.go('/login');
-          }
-        }
-      });
-    } catch (e) {
-      // Auth failed → login screen
+    // Step 3: Navigate immediately based on local session (NO waiting for API)
+    // The user is considered authenticated as soon as local data is restored
+    if (authProvider.isAuthenticated) {
+      // Navigate to home immediately - local session exists
+      _navigateToHome(authProvider);
+    } else {
+      // No local session - go to login
       if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.go('/login');
-        });
+        context.go('/login');
       }
+    }
+  }
+
+  void _navigateToHome(AuthProvider authProvider) {
+    // Navigate to home immediately, then refresh in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.go('/home');
+        // Background sync after navigation (non-blocking)
+        _syncUserInBackground(authProvider);
+      }
+    });
+  }
+
+  Future<void> _syncUserInBackground(AuthProvider authProvider) async {
+    try {
+      // Optional background sync - does NOT block navigation
+      await authProvider.refreshUserInBackground();
+    } catch (e) {
+      // Silently ignore errors - user stays logged in with local data
+      print('Background sync failed (non-blocking): $e');
     }
   }
 

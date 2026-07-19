@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/back_arrow.dart';
+
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -103,10 +105,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Politique de confidentialité'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: const BackArrow(),
         actions: [
           IconButton(
             icon: const Icon(Icons.home),
@@ -153,16 +152,19 @@ class PrivacyPolicyScreen extends StatelessWidget {
               title: '1. Introduction',
               icon: Icons.info,
               content:
+                  
                   'Djassa CI est une plateforme de commerce électronique permettant aux utilisateurs d\'acheter et de vendre des produits entre particuliers en Côte d\'Ivoire.\n\n'
-                  'Cette politique de confidentialité explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application et nos services.',
+                  'Cette politique de confidentialité explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application et nos services.\n\n'
+                  '⚠️ NOTE IMPORTANTE : Certaines fonctionnalités de l\'application (telles que le système de paiement intégré, la geolocalisation, données de transaction et le chat interne...) ont été désactivées momentanément pour des raisons de sécurité et de maintenance technique.\n\n',
+
             ),
             _buildBulletSection(
               title: '2. Données collectées',
               icon: Icons.storage,
               items: [
                 'Informations d\'inscription : nom, prénom, numéro de téléphone, adresse de livraison, mot de passe (stocké sous forme cryptée)',
-                'Données de transaction : produits achetés ou vendus, historique des commandes, montant des paiements, méthode de paiement utilisée, informations de livraison',
-                'Données de navigation et utilisation : messages échangés via le chat, produits consultés ou recherchés, actions effectuées sur la plateforme',
+                'Données de transaction : produits achetés ou vendus, historique des commandes, montant des paiements, méthode de paiement utilisée, informations de livraison(momentanément indisponible)',
+                'Données de navigation et utilisation : mise en contacte vendeur et acheteur via WhatsApp/appel , produits consultés ou recherchés, actions effectuées sur la plateforme',
                 'Données techniques : adresse IP, type de navigateur, logs de connexion',
               ],
             ),
@@ -172,25 +174,34 @@ class PrivacyPolicyScreen extends StatelessWidget {
               items: [
                 'Créer et gérer votre compte utilisateur',
                 'Permettre les achats et ventes de produits',
-                'Traiter les commandes et paiements',
+                'Gérer les transactions et les paiements(momentanément indisponible)',
                 'Assurer la sécurité de la plateforme',
                 'Améliorer les services et l\'expérience utilisateur',
-                'Permettre la communication entre acheteurs et vendeurs (chat)',
+                'Permettre la communication entre acheteurs et vendeurs (watsapp, appel)',
               ],
             ),
+
+             _buildBulletSection(
+              title: '4. Géolocalisation au Premier Plan',
+              icon: Icons.location_on,
+              items: [
+                  'L\'application accède aux coordonnées GPS (Latitude et Longitude) de votre appareil uniquement lorsque l\'application est active à l\'écran, et exclusivement au moment où un vendeur demande la certification officielle de sa boutique.\n\n'
+                  'L\'accès au GPS requiert votre consentement obligatoire via la boîte de dialogue du système Android/iOS. Aucun suivi de localisation n\'est réalisé en arrière-plan lorsque l\'application est fermée.',
+             ]
+            ),  
             _buildBulletSection(
-              title: '4. Partage des données',
+              title: '5. Partage des données',
               icon: Icons.share,
               items: [
                 'Nous ne vendons pas vos données personnelles.',
                 'Avec les vendeurs pour traiter une commande',
                 'Avec les acheteurs pour organiser la livraison',
-                'Avec des services de paiement (ex: CinetPay)',
+                'Avec des services de paiement (ex: genuispay) momentanément indisponible',
                 'Avec les autorités en cas d\'obligation légale',
               ],
             ),
             _buildSection(
-              title: '5. Stockage et sécurité',
+              title: '6. Stockage et sécurité',
               icon: Icons.security,
               content:
                   'Vos données sont stockées de manière sécurisée sur nos serveurs.\n\n'
@@ -201,14 +212,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'Cependant, aucun système n\'est totalement sécurisé à 100%.',
             ),
             _buildSection(
-              title: '6. Durée de conservation',
+              title: '7. Durée de conservation',
               icon: Icons.timer,
               content:
                   'Les données sont conservées tant que votre compte est actif.\n\n'
                   'Vous pouvez demander la suppression de votre compte à tout moment.',
             ),
             _buildBulletSection(
-              title: '7. Vos droits',
+              title: '8. Vos droits',
               icon: Icons.verified_user,
               items: [
                 'Accéder à vos données personnelles',
@@ -218,7 +229,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ],
             ),
             _buildSection(
-              title: '8. Cookies et technologies similaires',
+              title: '9. Cookies et technologies similaires',
               icon: Icons.cookie,
               content:
                   'Djassa CI peut utiliser des cookies pour :\n'
@@ -227,17 +238,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Analyser l\'utilisation de l\'application',
             ),
             _buildSection(
-              title: '9. Services tiers',
+              title: '10. Services tiers',
               icon: Icons.cloud,
               content:
                   'Nous utilisons certains services externes :\n'
-                  '• Services de paiement (ex : CinetPay)\n'
+                  '• pour la gestion des images (ex : cloudinary)\n'
                   '• Notifications (FCM / Firebase)\n'
                   '• Hébergement du serveur\n\n'
                   'Ces services ont leurs propres politiques de confidentialité.',
             ),
             _buildSection(
-              title: '10. Responsabilité de l\'utilisateur',
+              title: '11. Responsabilité de l\'utilisateur',
               icon: Icons.person,
               content:
                   'L\'utilisateur est responsable :\n'
@@ -246,7 +257,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• De l\'usage de son compte',
             ),
             _buildSection(
-              title: '11. Modifications',
+              title: '12. Modifications',
               icon: Icons.update,
               content:
                   'Cette politique peut être mise à jour à tout moment pour améliorer le service ou respecter la loi.',
@@ -281,9 +292,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     ListTile(
                       leading: const Icon(Icons.email, color: Colors.orange),
-                      title: const Text('support@djassaci.com'),
+                      title: const Text('djassaci3@gmail.com'),
                       onTap: () => launchUrl(
-                        Uri.parse('mailto:support@djassaci.com'),
+                        Uri.parse('mailto:djassaci3@gmail.com'),
                       ),
                     ),
                   ],

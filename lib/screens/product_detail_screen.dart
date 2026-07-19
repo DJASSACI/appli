@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../providers/cart_provider.dart';
-import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../models/product.dart';
+import '../providers/products_provider.dart';
+
 import '../utils/constants.dart';
+import '../providers/auth_provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'payment_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -21,6 +25,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   double? _buyerLat;
   double? _buyerLng;
   bool _isGettingGps = false;
+
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
   final TextEditingController _nomLivraisonController = TextEditingController();
@@ -33,14 +38,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     'MTN Money',
     'Moov Money',
     'Wave',
-    'Espèce'
+    'Espèce',
   ];
 
   Future<void> _getCurrentLocation() async {
     try {
-      setState(() {
-        _isGettingGps = true;
-      });
+      setState(() => _isGettingGps = true);
 
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -53,22 +56,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _isGettingGps = false;
         });
       }
-    } catch (e) {
-      // Silent fail - no snackbar, just fallback
+    } catch (_) {
       if (mounted) {
-        setState(() {
-          _isGettingGps = false;
-        });
+        setState(() => _isGettingGps = false);
       }
     }
   }
 
   Future<void> _buyDirect(Product product) async {
-    if (_paymentMethod == null || _phoneController.text.isEmpty || _accountController.text.isEmpty ||
-        _nomLivraisonController.text.isEmpty || _telLivraisonController.text.isEmpty ||
-        _villeCommuneController.text.isEmpty || _quartierController.text.isEmpty) {
+    if (_paymentMethod == null ||
+        _phoneController.text.isEmpty ||
+        _accountController.text.isEmpty ||
+        _nomLivraisonController.text.isEmpty ||
+        _telLivraisonController.text.isEmpty ||
+        _villeCommuneController.text.isEmpty ||
+        _quartierController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Remplissez tous les champs'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Remplissez tous les champs'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -99,7 +106,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       await ApiService.createOrder(data);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Commande réussie !'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Commande réussie !'),
+          backgroundColor: Colors.green,
+        ),
       );
 
       _paymentMethod = null;
@@ -127,7 +137,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _villeCommuneController.clear();
     _quartierController.clear();
 
-    // Silently get GPS location
     _getCurrentLocation();
 
     showDialog(
@@ -139,12 +148,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${product.price.toStringAsFixed(0)} $currencySymbol'),
+                Text(
+                  '${product.price.toStringAsFixed(0)} $currencySymbol',
+                ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _paymentMethod,
-                  decoration: const InputDecoration(labelText: 'Méthode de paiement'),
-                  items: paymentOptions.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+                  decoration:
+                      const InputDecoration(labelText: 'Méthode de paiement'),
+                  items: paymentOptions
+                      .map(
+                        (option) => DropdownMenuItem(
+                          value: option,
+                          child: Text(option),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (value) => setState(() => _paymentMethod = value),
                 ),
                 const SizedBox(height: 12),
@@ -206,7 +225,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: const Text('Annuler'),
             ),
             ElevatedButton(
-              onPressed: () => _buyDirect(product),
+              onPressed: () async {
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Commande désactivée (mode test).'),
+                  ),
+                );
+              },
               child: const Text('Acheter maintenant'),
             ),
           ],
@@ -217,7 +244,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final product = GoRouterState.of(context).extra as Product?;
+
+
+    final state = GoRouterState.of(context);
+    final productFromExtra = state.extra as Product?;
+    final productId = state.pathParameters['id'];
+
+    // IMPORTANT:
+    // On ignore state.extra (qui peut contenir un ancien Product avec un vendeur non
+    // encore certifié). On recalcule toujours depuis ProductsProvider.
+    final product = (productId != null)
+        ? context
+            .read<ProductsProvider>()
+            .products
+            .firstWhere((p) => p.id.toString() == productId)
+        : null;
+
 
     if (product == null) {
       return Scaffold(
@@ -243,13 +285,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Container(
               height: 300,
               width: double.infinity,
-              child: Image.network(
-                product.image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 300,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image_not_supported, size: 50),
+              child: InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => Dialog(
+                      insetPadding: EdgeInsets.zero,
+                      backgroundColor: Colors.black,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: InteractiveViewer(
+                                child: Image.network(
+                                  product.image,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) => const Center(
+                                    child: Icon(Icons.image_not_supported,
+                                        color: Colors.white, size: 50),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 24,
+                              right: 16,
+                              child: IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: Image.network(
+                  product.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 300,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image_not_supported, size: 50),
+                  ),
                 ),
               ),
             ),
@@ -279,10 +360,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     'Vendeur: ${product.vendeurNom}',
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                   ),
+if (product.vendeur != null)
+                    Builder(
+                      builder: (_) {
+final sellerVerified = (product.vendeur is Map<String, dynamic>)
+                            ? (product.vendeur['sellerVerified'] == true ||
+                                product.vendeur['seller_verified'] == true)
+                            : false;
+
+return sellerVerified
+                            ? const Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Text(
+                                  '🛡️ Vendeur certifié',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            : const SizedBox.shrink();
+                      },
+                    )
+                  else
+                    const SizedBox.shrink(),
+
                   Text(
                     'Localisation: ${product.vendeurLocalisation}',
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                   ),
+
                   const SizedBox(height: 20),
                   const Text(
                     'Description',
@@ -293,8 +397,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     product.description,
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
+
                   const SizedBox(height: 30),
-                  // Contact Vendeur
+
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -303,17 +408,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           const Text(
                             'Contacter le vendeur',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: product.vendeurCompte.isNotEmpty ? () => launchUrl(
-                                    Uri.parse('tel://${product.vendeurCompte}'),
-                                    mode: LaunchMode.externalApplication,
-                                  ) : null,
+                                  onPressed: product.vendeurCompte.isNotEmpty
+                                      ? () => launchUrl(
+                                            Uri.parse('tel://${product.vendeurCompte}'),
+                                            mode: LaunchMode.externalApplication,
+                                          )
+                                      : null,
                                   icon: const Icon(Icons.phone),
                                   label: const Text('Appel'),
                                   style: ElevatedButton.styleFrom(
@@ -325,13 +435,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: product.vendeurCompte.isNotEmpty ? () {
-                                    final message = 'Je suis intéressé par ${product.name} quantite 1 et photo du produit ${product.description}';
-                                    launchUrl(
-                                      Uri.parse('whatsapp://send?phone=${product.vendeurCompte}&text=${Uri.encodeComponent(message)}'),
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  } : null,
+                                  onPressed: product.vendeurCompte.isNotEmpty
+                                      ? () {
+final message =
+                                              'Bonjour ! Je viens de voir votre annonce pour ${product.name} au prix de ${product.price.toStringAsFixed(0)} FCFA sur l\'application DJASSA-CI . Est-il toujours disponible ? Voici la description de l\'article : ${product.description}';
+                                          launchUrl(
+                                            Uri.parse(
+                                              'whatsapp://send?phone=${product.vendeurCompte}&text=${Uri.encodeComponent(message)}',
+                                            ),
+                                            mode: LaunchMode.externalApplication,
+                                          );
+                                        }
+                                      : null,
                                   icon: const Icon(Icons.chat),
                                   label: const Text('WhatsApp'),
                                   style: ElevatedButton.styleFrom(
@@ -341,53 +456,72 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                               ),
                             ],
-
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.store),
-                              label: Text('Voir boutique ${product.vendeurNom}'),
-                              onPressed: () => context.go('/seller/${product.vendeurNom}'),
-                            ),
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'Vendeur: ${product.vendeurNom} (${product.vendeurLocalisation})',
                             style: TextStyle(color: Colors.grey[600]),
                           ),
+// Afficher la boutique pour tout le monde (supprime la restriction sellerVerified)
+if (product.vendeur != null)
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.store),
+                                label: Text('Voir boutique ${product.vendeurNom}'),
+                                onPressed: () => context
+                                    .push('/seller/${product.vendeurNom}'),
+                              ),
+                            ),
                         ],
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Provider.of<CartProvider>(context, listen: false).addItem(product);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Ajouté au panier !')),
-                            );
-                          },
-                          icon: const Icon(Icons.shopping_cart),
-                          label: Text('Ajouter au panier'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+
+                  // Actions en bas: Ajouter au panier puis Voir panier juste après
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Provider.of<CartProvider>(context, listen: false)
+                                  .addItem(product);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Ajouté au panier !'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_cart),
+                            label: const Text('Ajouter au panier'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showPaymentDialog(product),
-                          icon: const Icon(Icons.payment),
-                          label: const Text('Acheter maintenant'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.shopping_bag_outlined),
+                            label: const Text('Voir panier'),
+                            onPressed: () => context.go('/cart'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[200],
+                              foregroundColor: Colors.black,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+
+                  const SizedBox(height: 10),
                 ],
               ),
             ),

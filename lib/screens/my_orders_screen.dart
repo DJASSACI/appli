@@ -7,6 +7,9 @@ import '../utils/constants.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/back_arrow.dart';
+
+
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -19,7 +22,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.loadCurrentUser();
       Provider.of<OrdersProvider>(context, listen: false).fetchMyOrders();
     });
   }
@@ -42,6 +47,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: const Text('Mes commandes'),
         actions: [
           IconButton(
@@ -83,10 +89,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 title: Text('Commande #${order.id}'),
             trailing: Wrap(
               children: [
+          /*
                 IconButton(
                   icon: const Icon(Icons.visibility),
                   onPressed: () => context.push('/order-detail', extra: order),
                 ),
+                */
                 IconButton(
                   icon: const Icon(Icons.chat, color: Colors.blue),
                   tooltip: 'Chat Vendeur',

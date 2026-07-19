@@ -1,16 +1,25 @@
-import 'dart:io';
+ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+// import 'package:form_data/form_data.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/products_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/cloudinary_storage_service.dart';
+
+import 'package:provider/provider.dart';
+
+
 import '../utils/constants.dart';
 import '../models/product.dart';
+import '../widgets/back_arrow.dart';
 
 class SellScreen extends StatefulWidget {
+
   const SellScreen({super.key});
 
   @override
@@ -23,10 +32,14 @@ class _SellScreenState extends State<SellScreen> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   String? _selectedCategory;
-  String? _selectedPaymentMethod;
+String? _selectedPaymentMethod;
   File? _imageFile;
+  String? _imageUrl;
+  bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
   final _apiService = ApiService();
+  final CloudinaryStorageService _storageService = CloudinaryStorageService();
+
   final _vendeurCompteController = TextEditingController();
   final _paymentAccountController = TextEditingController();
 
@@ -35,23 +48,29 @@ class _SellScreenState extends State<SellScreen> {
   ];
 
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _imageFile = File(image.path);
-      });
-    }
-  }
+
+
+Future<void> _pickImage() async {
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+  if (image == null) return;
+  if (!mounted) return;
+
+  setState(() {
+    _imageFile = File(image.path);
+    // Reset URL: l’upload ne se fera qu’au moment du clic sur “Publier produit”.
+    _imageUrl = null;
+  });
+}
+
+
 
   Future<void> _createProduct() async {
     if (_formKey.currentState!.validate() && _selectedCategory != null && _selectedPaymentMethod != null) {
       try {
-        String imageData = 'https://via.placeholder.com/400x400?text=Product';
-        if (_imageFile != null) {
-          final bytes = await _imageFile!.readAsBytes();
-          imageData = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-        }
+        debugPrint('🔥 [SELL_SCREEN] DÉBUT CREATE PRODUCT - Image: ${_imageFile?.path ?? "NULL"}');
 
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final user = authProvider.user;
@@ -64,19 +83,44 @@ class _SellScreenState extends State<SellScreen> {
           return;
         }
 
+        if (_imageFile == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erreur: Image requise'), backgroundColor: Colors.red),
+          );
+          return;
+        }
+
+        setState(() {
+          _isUploading = true;
+        });
+
+final productName = _nameController.text.replaceAll(RegExp(r'[^\w\s-]'), '');
+
+final imageUrl = await CloudinaryStorageService()
+            .uploadProductImage(_imageFile!, productName);
+
+
+        if (!mounted) return;
+        setState(() {
+          _imageUrl = imageUrl;
+          _isUploading = false;
+        });
+
+        debugPrint('📤 [SELL_SCREEN] Using Firebase URL: $imageUrl');
+
         final response = await _apiService.post('/api/products', data: {
           'name': _nameController.text,
-          'price': double.parse(_priceController.text),
-          'image': imageData,
+          'price': _priceController.text,
           'description': _descriptionController.text,
           'categorie': _selectedCategory!,
-          'vendeur': user.id,
-          'vendeurNom': '${user.nom} ${user.prenom}',
           'vendeurCompte': _vendeurCompteController.text,
           'vendeurLocalisation': user.address,
           'paymentMethod': _selectedPaymentMethod,
           'paymentAccount': _paymentAccountController.text,
+          'image': imageUrl,
         });
+
+
 
         if (response.statusCode == 201) {
           if (mounted) {
@@ -84,7 +128,7 @@ class _SellScreenState extends State<SellScreen> {
               const SnackBar(content: Text('Produit publié !'), backgroundColor: Colors.green),
             );
             await Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
-            context.go('/my-products');
+context.go('/home');
           }
         }
       } catch (e) {
@@ -101,6 +145,7 @@ class _SellScreenState extends State<SellScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: const Text('Vendre un produit'),
         actions: [
           IconButton(
@@ -112,11 +157,13 @@ class _SellScreenState extends State<SellScreen> {
             tooltip: 'Mes produits',
             onPressed: () => context.go('/my-products'),
           ),
+          /*
           IconButton(
             icon: const Icon(Icons.receipt_long),
             tooltip: 'Mes commandes',
             onPressed: () => context.go('/my-seller-orders'),
           ),
+          */
         ],
       ),
       body: Padding(
@@ -135,19 +182,72 @@ class _SellScreenState extends State<SellScreen> {
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: _imageFile == null
-                        ? const Column(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (_imageUrl != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _imageUrl!,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: const Center(child: CircularProgressIndicator()),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return _imageFile != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(_imageFile!, fit: BoxFit.cover),
+                                      )
+                                    : Container(color: Colors.grey[300]);
+                              },
+                            ),
+                          )
+                        else if (_imageFile != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(_imageFile!, fit: BoxFit.cover),
+                          )
+                        else
+                          const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
                               SizedBox(height: 8),
-                              Text('Choisir photo galerie'),
+                              Text("Aucune image sélectionnée"),
                             ],
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(_imageFile!, fit: BoxFit.cover),
                           ),
+                        if (_isUploading)
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -173,7 +273,7 @@ class _SellScreenState extends State<SellScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Catégorie *',
                     border: OutlineInputBorder(),
@@ -239,7 +339,9 @@ class _SellScreenState extends State<SellScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: _createProduct,
+                  onPressed: (_isUploading || _imageFile == null) ? null : _createProduct,
+                  // Numéro compte paiement vendeur: $_paymentAccountController
+                  // Moyen paiement vendeur: $_selectedPaymentMethod
                   icon: const Icon(Icons.sell),
                   label: const Text('Publier produit'),
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),

@@ -12,17 +12,20 @@ class ApiService {
   String? _token;
 
   void _init() {
-    _dio = Dio(BaseOptions(
+_dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      sendTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 120),
       headers: {'Content-Type': 'application/json'},
     ));
 
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
+        // Debug full target URL (helps diagnose 404 from wrong baseUrl / wrong backend instance)
         print('🚀 REQUEST: ${options.method} ${options.uri}');
+        print('   Authorization header set? ${_token != null && _token!.isNotEmpty}');
         if (_token != null) {
           options.headers['Authorization'] = 'Bearer $_token';
         }
@@ -33,7 +36,11 @@ class ApiService {
         handler.next(response);
       },
       onError: (error, handler) {
-        print('❌ ERROR: ${error.message} | ${error.response?.statusCode}');
+        final status = error.response?.statusCode;
+        // Dio fournit souvent requestOptions.uri pour savoir exactement quel endpoint a échoué.
+        final uri = error.requestOptions.uri;
+        print('❌ ERROR: ${error.message} | status=$status');
+        print('   FAILED URI: $uri');
         handler.next(error);
       },
     ));
@@ -53,13 +60,14 @@ class ApiService {
     }
   }
 
-  Future<Response> post(String endpoint, {dynamic data}) async {
+  Future<Response> post(String endpoint, {dynamic data, FormData? formData}) async {
     try {
-      return await _dio.post(endpoint, data: data);
+      return await _dio.post(endpoint, data: data ?? formData);
     } catch (e) {
       rethrow;
     }
   }
+
 
   Future<Response> put(String endpoint, {dynamic data}) async {
     try {
@@ -78,8 +86,40 @@ class ApiService {
   }
 
 static Future<Response> createOrder(Map<String, dynamic> data) async {
-    data['notify_url'] = "https://djassa-backend-imxo.onrender.com/notify";
+    data['notify_url'] = "https://djassa-backend-imxo.onrender.com/api/payment/geniuspay/webhook";
     data['transactionId'] = DateTime.now().millisecondsSinceEpoch.toString();
     return await instance.post(endpointOrders, data: data);
   }
+
+  /// Retourne directement l'URL checkout (champ checkout_url) du backend GeniusPay.
+  ///
+  /// Exemple: https://...
+  Future<String> initGeniusPayCheckoutUrl({
+    required int amount,
+    required String phone,
+    required String orderId,
+    required String name,
+  }) async {
+    final response = await _dio.post(
+      '/api/payment/geniuspay/init',
+      data: {
+        "amount": amount,
+        "phone": phone,
+        "orderId": orderId,
+        "name": name,
+      },
+    );
+
+
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      final url = data['checkout_url'];
+      if (url is String && url.isNotEmpty) return url;
+    }
+
+    // Si checkout_url est absent, retourner vide pour garder un flux "une seule réponse".
+    return '';
+  }
+
+
 }

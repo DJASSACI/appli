@@ -26,7 +26,26 @@ class ProductsProvider with ChangeNotifier {
       final response = await apiService.get(endpointProducts);
       if (response.statusCode == 200) {
         final allProducts = (response.data as List).map((json) => Product.fromJson(json)).toList();
-        _products = allProducts.where((p) => p.isActive == true).toList();
+        _products = allProducts
+            .where((p) => p.isActive == true)
+            .toList();
+
+        // Tri: garder les plus récents en haut (utilise uniquement les champs présents côté backend)
+        // Backend utilise généralement `datePublication`. On fallback sur `date` si nécessaire.
+        _products.sort((a, b) {
+          final da = a.datePublication ?? (a as dynamic).date ?? (a as dynamic).created_at;
+          final db = b.datePublication ?? (b as dynamic).date ?? (b as dynamic).created_at;
+          if (da == null && db == null) return 0;
+          if (da == null) return 1;
+          if (db == null) return -1;
+          try {
+            return DateTime.parse(db.toString()).compareTo(DateTime.parse(da.toString()));
+          } catch (_) {
+            return 0;
+          }
+        });
+
+
         _filteredProducts = List.from(_products);
       } else {
         _error = 'Erreur serveur: ${response.statusCode}';

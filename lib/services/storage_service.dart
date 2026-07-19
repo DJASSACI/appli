@@ -1,16 +1,15 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
+  static const String _userDataKey = 'user_data';
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-  late final SharedPreferences prefs;
+  static SharedPreferences? _prefs;
 
-  StorageService() {
-    _initPrefs();
-  }
-
-  Future<void> _initPrefs() async {
-    prefs = await SharedPreferences.getInstance();
+  static Future<SharedPreferences> get prefs async {
+    _prefs ??= await SharedPreferences.getInstance();
+    return _prefs!;
   }
 
   // Secure storage for tokens
@@ -30,13 +29,38 @@ class StorageService {
     await secureStorage.deleteAll();
   }
 
-  // Local prefs for cart, etc.
-  Future<void> setInt(String key, int value) async {
-    await prefs.setInt(key, value);
+  // User data for local session (SharedPreferences)
+  Future<void> saveUserData(Map<String, dynamic> userData) async {
+    final p = await prefs;
+    await p.setString(_userDataKey, jsonEncode(userData));
   }
 
-  int? getInt(String key) {
-    return prefs.getInt(key);
+  Future<Map<String, dynamic>?> getUserData() async {
+    final p = await prefs;
+    final String? data = p.getString(_userDataKey);
+    if (data == null) return null;
+    return jsonDecode(data) as Map<String, dynamic>;
+  }
+
+  Future<void> clearUserData() async {
+    final p = await prefs;
+    await p.remove(_userDataKey);
+  }
+
+  Future<bool> hasUserData() async {
+    final p = await prefs;
+    return p.containsKey(_userDataKey);
+  }
+
+  // Local prefs for cart, etc.
+  Future<void> setInt(String key, int value) async {
+    final p = await prefs;
+    await p.setInt(key, value);
+  }
+
+  Future<int?> getInt(String key) async {
+    final p = await prefs;
+    return p.getInt(key);
   }
 
   // etc for other types

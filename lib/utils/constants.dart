@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 const String appName = 'Djassa CI';
 const String appVersion = '1.0.0';
-const String baseUrl = 'http://10.0.2.2:3000';
+// Base URL (Render instance)
+// NOTE: must match the backend you verified with /api/health and /api/products.
+const String baseUrl = 'https://djassa-backend-imxo.onrender.com';
 
 /// API Endpoints (relative to baseUrl)
 const String endpointAuthRegister = '/api/auth/register';

@@ -22,7 +22,7 @@ class ChatService {
   Future<void> connectSocket() async {
     if (_socket != null) return;
 
-    _socket = IO.io('http://localhost:3000', IO.OptionBuilder()
+_socket = IO.io('https://djassa-backend-imxo.onrender.com', IO.OptionBuilder()
         .setTransports(['websocket'])
         .disableAutoConnect()
         .build());

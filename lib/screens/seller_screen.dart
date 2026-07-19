@@ -4,6 +4,9 @@ import '../providers/products_provider.dart';
 import '../models/product.dart';
 import '../utils/constants.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/back_arrow.dart';
+
+
 
 class SellerScreen extends StatefulWidget {
   final String sellerName;
@@ -26,6 +29,7 @@ class _SellerScreenState extends State<SellerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const BackArrow(),
         title: Text(widget.sellerName),
         actions: [
           IconButton(
@@ -58,8 +62,8 @@ class _SellerScreenState extends State<SellerScreen> {
             itemBuilder: (context, index) {
               final product = sellerProducts[index];
               return Card(
-                child: InkWell(
-                  onTap: () => context.go('/product/${product.id}', extra: product),
+child: InkWell(
+                  onTap: () => context.push('/product/${product.id}', extra: product),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
