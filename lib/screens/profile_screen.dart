@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/back_arrow.dart';
+import '../widgets/certification_banner.dart';
 import '../services/api_service.dart';
 import 'payment_screen.dart';
 
@@ -106,7 +107,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
+              // Bannière d'avertissement d'expiration de certification vendeur
+              CertificationBanner(
+                sellerVerifiedUntil: user.sellerVerifiedUntil,
+                sellerVerified: user.sellerVerified,
+                sellerName: user.nom,
+                onRenew: () => authProvider.refreshUserInBackground(),
+              ),
+              const SizedBox(height: 14),
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.phone),

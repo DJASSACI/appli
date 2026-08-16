@@ -11,6 +11,7 @@ class User {
   final String? fcmToken;
   final bool? sellerVerified;
   final String? sellerVerifiedAt;
+  final String? sellerVerifiedUntil;
 
 
   const User({
@@ -24,6 +25,7 @@ class User {
     this.fcmToken,
     this.sellerVerified,
     this.sellerVerifiedAt,
+    this.sellerVerifiedUntil,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class User {
       fcmToken: json['fcmToken'],
       sellerVerified: (json['sellerVerified'] ?? json['seller_verified']),
       sellerVerifiedAt: (json['sellerVerifiedAt'] ?? json['seller_verified_at']),
+      sellerVerifiedUntil: (json['sellerVerifiedUntil'] ?? json['seller_verified_until']),
     );
   }
 

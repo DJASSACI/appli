@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'product_detail_screen.dart';
 
 import '../widgets/back_arrow.dart';
+import '../widgets/certification_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -118,6 +119,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   onChanged: productsProvider.searchProducts,
                 ),
+              ),
+              // Bannière d'avertissement d'expiration de certification vendeur
+              CertificationBanner(
+                sellerVerifiedUntil: authProvider.user?.sellerVerifiedUntil,
+                sellerVerified: authProvider.user?.sellerVerified,
+                sellerName: authProvider.user?.nom ?? '',
+                onRenew: () => authProvider.refreshUserInBackground(),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
