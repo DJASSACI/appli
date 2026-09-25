@@ -45,15 +45,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     });
   }
 
-  List<String> _extractCategories(List<Product> products) {
-    final cats = products
-        .map((p) => p.categorie)
-        .where((c) => c.isNotEmpty)
-        .toSet()
-        .toList()..sort();
-    return cats;
-  }
-
   List<String> _extractCities(List<Product> products, String category) {
     final cities = products
         .where((p) => p.categorie == category && p.vendeurLocalisation.isNotEmpty)
@@ -196,11 +187,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
 
     if (_selectedCategory == null) {
-      return _buildCategoryGrid(_extractCategories(products), horizontalPadding);
+      return _buildCategoryGrid(categories, horizontalPadding);
     }
 
     if (_selectedCity == null || _selectedCity == '') {
-      final cities = _extractCities(products, _selectedCategory!);
+      final categoryProducts = products
+          .where((p) => p.categorie == _selectedCategory)
+          .toList();
+      if (categoryProducts.isEmpty) {
+        return _buildEmptyState(
+          horizontalPadding,
+          'Aucun produit dans cette catégorie',
+          Icons.search_off,
+        );
+      }
+      final cities = _extractCities(categoryProducts, _selectedCategory!);
       return _buildCityGrid(cities, horizontalPadding);
     }
 

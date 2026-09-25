@@ -158,17 +158,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               ElevatedButton.icon(
                 onPressed: () async {
-                  final numeroCompte = user.numero.trim();
-                  final nomCompte = user.nom.trim();
-                  final message =
-                      'Bonjour DJASSA CI, je souhaite demander la suppression de mon compte lié au $numeroCompte et $nomCompte ';
+                  await showDialog<void>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text(
+                        'Demande de suppression de mon compte',
+                      ),
+                      content: const Text(
+                        'Vous allez être redirigé vers WhatsApp pour envoyer votre demande de suppression. Vos informations seront examinées afin de traiter votre demande.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(dialogContext).pop();
 
-                  const phone = '+2250715926401';
-                  final url = Uri.parse(
-                    'whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}',
+                            final numeroCompte = user.numero.trim();
+                            final nomCompte = user.nom.trim();
+                            final message =
+                                'Bonjour DJASSA CI, je souhaite demander la suppression de mon compte lié au $numeroCompte et $nomCompte ';
+
+                            const phone = '+2250715926401';
+                            final url = Uri.parse(
+                              'whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}',
+                            );
+
+                            await launchUrl(url);
+                          },
+                          child: const Text('Continuer'),
+                        ),
+                      ],
+                    ),
                   );
-
-                  await launchUrl(url);
                 },
                 icon: const Icon(Icons.delete_forever),
                 label: const Text('Demander la suppression de mon compte'),
@@ -177,23 +201,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               ElevatedButton.icon(
                 onPressed: () async {
+                  await showDialog<void>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('Devenir boutique certifiée'),
+                      content: const Text(
+                        'Vous allez être redirigé vers WhatsApp pour demander la certification de votre boutique. Certaines informations et justificatifs pourront vous être demandés afin de vérifier votre identité et les informations de votre boutique.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(dialogContext).pop();
 
-                  // Refresh seller status before requesting a new certification window
-                  try {
-                    await ApiService.instance.post('/api/users/refresh-seller-verified', data: {});
-                  } catch (_) {}
+                            // Refresh seller status before requesting a new certification window
+                            try {
+                              await ApiService.instance.post('/api/users/refresh-seller-verified', data: {});
+                            } catch (_) {}
 
-                  // Redirection directe WhatsApp (sans formulaire)
-                  final nomVendeur = user.nom.trim();
-                  final message =
-                      'Bonjour l\'équipe Djassa-ci, je souhaite certifier ma boutique. Voici mon nom de vendeur : $nomVendeur';
+                            // Redirection directe WhatsApp (sans formulaire)
+                            final nomVendeur = user.nom.trim();
+                            final message =
+                                'Bonjour l\'équipe Djassa-ci, je souhaite certifier ma boutique. Voici mon nom de vendeur : $nomVendeur';
 
-                  const adminPhone = '+2250715926401';
-                  final url = Uri.parse(
-                    'whatsapp://send?phone=$adminPhone&text=${Uri.encodeComponent(message)}',
+                            const adminPhone = '+2250715926401';
+                            final url = Uri.parse(
+                              'whatsapp://send?phone=$adminPhone&text=${Uri.encodeComponent(message)}',
+                            );
+
+                            await launchUrl(url);
+                          },
+                          child: const Text('Continuer'),
+                        ),
+                      ],
+                    ),
                   );
-
-                  await launchUrl(url);
                 },
                 icon: const Icon(Icons.verified_user),
                 label: const Text('Devenir boutique certifiée'),

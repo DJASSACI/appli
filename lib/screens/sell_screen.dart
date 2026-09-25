@@ -42,7 +42,36 @@ String? _selectedPaymentMethod;
   final _paymentAccountController = TextEditingController();
 
   final List<String> _categories = [
-    'Téléphones', 'Ordinateors', 'Audio', 'Accessoires', 'Tablettes', 'Montres', 'TV', 'Électroménager', 'Autre'
+    'Téléphones',
+    'Ordinateurs',
+    'Tablettes',
+    'Audio',
+    'TV',
+    'Électroménager',
+    'Accessoires',
+    'Montres',
+    'Vêtements',
+    'Chaussures',
+    'Sacs',
+    'Beauté & Cosmétiques',
+    'Bijoux',
+    'Maison & Décoration',
+    'Meubles',
+    'Cuisine',
+    'Jardin & Extérieur',
+    'Sports & Loisirs',
+    'Jeux & Jouets',
+    'Livres & Fournitures',
+    'Bébé & Enfant',
+    'Auto & Moto',
+    'Immobilier',
+    'Services',
+    'Alimentation',
+    'Animaux',
+    'Instruments de musique',
+    'Matériel professionnel',
+    'Électronique',
+    'Autre'
   ];
 
 

@@ -185,7 +185,53 @@ class _CartScreenState extends State<CartScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () => Provider.of<CartProvider>(context, listen: false).clear(),
+            onPressed: () async {
+              final cartProvider =
+                  Provider.of<CartProvider>(context, listen: false);
+
+              await showDialog<void>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Vider le panier ?'),
+                  content: const Text(
+                    'Voulez-vous vraiment supprimer tous les articles de votre panier ? Cette action est irréversible.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(110, 48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: const Text('Annuler'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        cartProvider.clear();
+                      },
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(80, 40),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        foregroundColor: Colors.red,
+                        textStyle: const TextStyle(fontSize: 14),
+                      ),
+                      child: const Text('vider'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.home),
