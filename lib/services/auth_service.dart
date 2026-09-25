@@ -98,7 +98,7 @@ if (response.statusCode == 201) {
 
       final response = await apiService.get(endpointAuthMe);
       if (response.statusCode == 200) {
-        return User.fromJson(response.data['user']);
+        return User.fromJson(response.data);
       }
 
       // For any non-200, keep session behavior non-blocking.

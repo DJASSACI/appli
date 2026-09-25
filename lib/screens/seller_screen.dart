@@ -27,13 +27,61 @@ class _SellerScreenState extends State<SellerScreen> {
   bool _isLoadingFollow = true;
   bool _isUpdatingFollow = false;
 
+  // Profil public du vendeur
+  String? _sellerAvatarUrl;
+  bool _sellerVerified = false;
+  String? _sellerVerifiedUntil;
+  bool _isLoadingSellerProfile = true;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
       _loadFollowStatus();
+      _loadSellerProfile();
     });
+  }
+
+  Future<void> _loadSellerProfile() async {
+    final sellerId = widget.sellerId;
+    if (sellerId == null) {
+      if (mounted) {
+        setState(() => _isLoadingSellerProfile = false);
+      }
+      return;
+    }
+
+    try {
+      final response = await ApiService.instance.get('/api/users/$sellerId');
+      if (!mounted) return;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        setState(() {
+          _sellerAvatarUrl = data['avatarUrl'];
+          _sellerVerified = data['sellerVerified'] == true;
+          _sellerVerifiedUntil = data['sellerVerifiedUntil'];
+          _isLoadingSellerProfile = false;
+        });
+      } else if (mounted) {
+        setState(() => _isLoadingSellerProfile = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingSellerProfile = false);
+      }
+    }
+  }
+
+  bool _isSellerCurrentlyCertified() {
+    if (!_sellerVerified) return false;
+    if (_sellerVerifiedUntil == null) return true;
+    try {
+      final until = DateTime.parse(_sellerVerifiedUntil!);
+      return until.isAfter(DateTime.now());
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _loadFollowStatus() async {
@@ -125,14 +173,71 @@ class _SellerScreenState extends State<SellerScreen> {
       );
     }
 
+    final isCertified = _isSellerCurrentlyCertified();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
+          // Avatar du vendeur
+          _isLoadingSellerProfile
+              ? const CircleAvatar(
+                  radius: 18,
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundImage: (_sellerAvatarUrl != null && _sellerAvatarUrl!.isNotEmpty)
+                      ? NetworkImage(_sellerAvatarUrl!)
+                      : null,
+                  child: (_sellerAvatarUrl == null || _sellerAvatarUrl!.isEmpty)
+                      ? Text(
+                          widget.sellerName.isNotEmpty
+                              ? widget.sellerName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        )
+                      : null,
+                ),
+          const SizedBox(width: 10),
+          // Nom + badge certifié
           Expanded(
+            child: Row(
+              children: [
+                Text(
+                  widget.sellerName,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isCertified) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '✓ Certifié',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Compteur d'abonnés
+          Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8),
             child: Text(
               '$_followersCount abonnés',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
           ),
           if (_isLoadingFollow)
