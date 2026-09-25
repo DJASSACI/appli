@@ -11,8 +11,6 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/cloudinary_storage_service.dart';
 
-import 'package:provider/provider.dart';
-
 
 import '../utils/constants.dart';
 import '../models/product.dart';

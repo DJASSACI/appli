@@ -6,3 +6,4 @@
 - [x] 4. Modifier `home_screen.dart` (ajouter la bannière)
 - [x] 5. Modifier `profile_screen.dart` (ajouter la bannière)
 
+ 

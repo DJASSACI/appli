@@ -185,7 +185,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               title: '4. Géolocalisation au Premier Plan',
               icon: Icons.location_on,
               items: [
-                  'L\'application accède aux coordonnées GPS (Latitude et Longitude) de votre appareil uniquement lorsque l\'application est active à l\'écran, et exclusivement au moment où un vendeur demande la certification officielle de sa boutique.\n\n'
+                  'L\'application accède aux coordonnées GPS (Latitude et Longitude) de votre appareil uniquement lorsque l\'application est active à l\'écran, et exclusivement l\'ors de l\'achat qui es momentanement indisponible .\n\n'
                   'L\'accès au GPS requiert votre consentement obligatoire via la boîte de dialogue du système Android/iOS. Aucun suivi de localisation n\'est réalisé en arrière-plan lorsque l\'application est fermée.',
              ]
             ),  

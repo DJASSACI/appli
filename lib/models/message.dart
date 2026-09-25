@@ -38,5 +38,5 @@ class Message {
     };
   }
 
-  bool get isSentByMe => senderId == receiverId; // Wait for currentUserId in service
+  bool isSentBy(int currentUserId) => senderId == currentUserId;
 }

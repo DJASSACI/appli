@@ -55,17 +55,19 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seule les images sont autorisées'));
-    }
-  },
-});
+// (Upload multer non utilisé dans ce serveur actuellement)
+// const upload = multer({
+//   storage,
+//   limits: { fileSize: 5 * 1024 * 1024 },
+//   fileFilter: (req, file, cb) => {
+//     if (file.mimetype.startsWith('image/')) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error('Seule les images sont autorisées'));
+//     }
+//   },
+// });
+
 
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -74,11 +76,37 @@ app.get('/', (req, res) => {
   res.send('Djassa CI Backend OK 🚀');
 });
 
-// File paths for JSON storage
-const USERS_FILE = path.join(__dirname, 'users.json');
-const PRODUCTS_FILE = path.join(__dirname, 'products.json');
-const ORDERS_FILE = path.join(__dirname, 'orders.json');
-const ARTICLES_FILE = path.join(__dirname, 'articles.json');
+// File paths for JSON storage (Render Persistent Disk)
+// Render Persistent Disk is mounted at /data (persistent across deployments).
+// Fallback to local __dirname for development.
+const DATA_DIR = process.env.DATA_DIR || '/data';
+
+const JSON_STORAGE_DIR = (() => {
+  try {
+    if (fs.existsSync(DATA_DIR) && fs.statSync(DATA_DIR).isDirectory()) {
+      return DATA_DIR;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return __dirname;
+})();
+
+const USERS_FILE = path.join(JSON_STORAGE_DIR, 'users.json');
+const PRODUCTS_FILE = path.join(JSON_STORAGE_DIR, 'products.json');
+const ORDERS_FILE = path.join(JSON_STORAGE_DIR, 'orders.json');
+const ARTICLES_FILE = path.join(JSON_STORAGE_DIR, 'articles.json');
+
+const ensureJSONFilesDir = () => {
+  try {
+    if (JSON_STORAGE_DIR !== __dirname) {
+      fs.mkdirSync(JSON_STORAGE_DIR, { recursive: true });
+    }
+  } catch (e) {
+    console.error('Error ensuring JSON storage dir:', e);
+  }
+};
+
 
 const readJSONFile = (filePath) => {
   try {
@@ -448,33 +476,7 @@ app.get('/api/products/:id', (req, res) => {
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-
-    const users = readJSONFile(USERS_FILE);
-    const sellerUser = users.find((u) => u.id == product.vendeur);
-
-    if (!sellerUser) {
-      return res.json({
-        ...product,
-        vendeur: null,
-        vendeurVerified: false,
-        seller_verified: false,
-      });
-    }
-
-    refreshSellerVerifiedStatus(sellerUser);
-
-    return res.json({
-      ...product,
-      vendeur: {
-        ...sellerUser,
-        id: sellerUser.id,
-        sellerVerified: sellerUser.sellerVerified === true,
-        sellerVerifiedAt: sellerUser.sellerVerifiedAt ?? null,
-        seller_verified: sellerUser.sellerVerified === true,
-      },
-      vendeurVerified: sellerUser.sellerVerified === true,
-      seller_verified: sellerUser.sellerVerified === true,
-    });
+    res.json(product);
   } catch (error) {
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -489,37 +491,7 @@ app.get('/api/products/category/:category', (req, res) => {
         p.categorie.toLowerCase() === req.params.category.toLowerCase() &&
         p.isActive !== false
     );
-
-    const users = readJSONFile(USERS_FILE);
-
-    const hydrated = categoryProducts.map((p) => {
-      const sellerUser = users.find((u) => u.id == p.vendeur);
-      if (!sellerUser) {
-        return {
-          ...p,
-          vendeur: null,
-          vendeurVerified: false,
-          seller_verified: false,
-        };
-      }
-
-      refreshSellerVerifiedStatus(sellerUser);
-
-      return {
-        ...p,
-        vendeur: {
-          ...sellerUser,
-          id: sellerUser.id,
-          sellerVerified: sellerUser.sellerVerified === true,
-          sellerVerifiedAt: sellerUser.sellerVerifiedAt ?? null,
-          seller_verified: sellerUser.sellerVerified === true,
-        },
-        vendeurVerified: sellerUser.sellerVerified === true,
-        seller_verified: sellerUser.sellerVerified === true,
-      };
-    });
-
-    res.json(hydrated);
+    res.json(categoryProducts);
   } catch (error) {
     console.error('Get products by category error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -537,37 +509,7 @@ app.get('/api/products/search/:query', (req, res) => {
           p.description.toLowerCase().includes(query) ||
           p.categorie.toLowerCase().includes(query))
     );
-
-    const users = readJSONFile(USERS_FILE);
-
-    const hydrated = searchResults.map((p) => {
-      const sellerUser = users.find((u) => u.id == p.vendeur);
-      if (!sellerUser) {
-        return {
-          ...p,
-          vendeur: null,
-          vendeurVerified: false,
-          seller_verified: false,
-        };
-      }
-
-      refreshSellerVerifiedStatus(sellerUser);
-
-      return {
-        ...p,
-        vendeur: {
-          ...sellerUser,
-          id: sellerUser.id,
-          sellerVerified: sellerUser.sellerVerified === true,
-          sellerVerifiedAt: sellerUser.sellerVerifiedAt ?? null,
-          seller_verified: sellerUser.sellerVerified === true,
-        },
-        vendeurVerified: sellerUser.sellerVerified === true,
-        seller_verified: sellerUser.sellerVerified === true,
-      };
-    });
-
-    res.json(hydrated);
+    res.json(searchResults);
   } catch (error) {
     console.error('Search products error:', error);
     res.status(500).json({ error: 'Server error' });

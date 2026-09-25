@@ -33,7 +33,9 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      _currentUserId = authProvider.user!.id!;
+      final user = authProvider.user;
+      if (user == null) return;
+      _currentUserId = user.id;
       Provider.of<ChatProvider>(context, listen: false)
           .initChat(_currentUserId)
           .then((_) => loadMessages());

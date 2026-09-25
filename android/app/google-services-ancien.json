@@ -7,28 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:964188330291:android:bbacbfd9b243750fef0646",
-        "android_client_info": {
-          "package_name": "com.djassaci.app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBb1XGjz2rOzeaRIjVVNJallPd_sVc4p1c"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:964188330291:android:fe8ea94f97018a0aef0646",
         "android_client_info": {
-          "package_name": "com.example.flutter_application_13"
+          "package_name": "com.djassaci.app"
         }
       },
       "oauth_client": [],

@@ -96,6 +96,7 @@ void main() async {
     print("❌ TOKEN FCM INVALID");
   } else {
     print("✅ TOKEN OK: $token");
+    await FirebaseMessaging.instance.subscribeToTopic('djassaci_all');
   }
 
 

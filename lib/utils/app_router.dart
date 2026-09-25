@@ -27,6 +27,8 @@ import '../models/order.dart';
 import '../providers/cart_provider.dart';
 import '../providers/chat_provider.dart';
 import '../screens/chat_screen.dart';
+import '../screens/boutiques_screen.dart';
+import '../screens/categories_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../models/product.dart';
 
@@ -130,6 +132,14 @@ GoRoute(
       path: '/privacy-policy',
       builder: (context, state) => const PrivacyPolicyScreen(),
     ),
+    GoRoute(
+      path: '/boutiques',
+      builder: (context, state) => const BoutiquesScreen(),
+    ),
+    GoRoute(
+      path: '/categories',
+      builder: (context, state) => const CategoriesScreen(),
+    ),
   ],
   redirect: (context, state) {
     RouteHistory.add(state.uri.toString());
@@ -155,6 +165,7 @@ GoRoute(
       '/privacy-policy',
       '/home',
       '/profile',
+      '/categories',
       '/product', // fallback (route param peut ne pas matcher exactement)
     };
 
