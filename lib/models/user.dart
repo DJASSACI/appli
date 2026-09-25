@@ -12,7 +12,7 @@ class User {
   final bool? sellerVerified;
   final String? sellerVerifiedAt;
   final String? sellerVerifiedUntil;
-
+  final String? avatarUrl;
 
   const User({
     required this.id,
@@ -26,6 +26,7 @@ class User {
     this.sellerVerified,
     this.sellerVerifiedAt,
     this.sellerVerifiedUntil,
+    this.avatarUrl,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,7 @@ class User {
       sellerVerified: (json['sellerVerified'] ?? json['seller_verified']),
       sellerVerifiedAt: (json['sellerVerifiedAt'] ?? json['seller_verified_at']),
       sellerVerifiedUntil: (json['sellerVerifiedUntil'] ?? json['seller_verified_until']),
+      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
     );
   }
 
@@ -53,6 +55,6 @@ class User {
     'role': role,
     'dateInscription': dateInscription,
     if (fcmToken != null) 'fcmToken': fcmToken,
+    if (avatarUrl != null) 'avatarUrl': avatarUrl,
   };
 }
-
