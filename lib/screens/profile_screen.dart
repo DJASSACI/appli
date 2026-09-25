@@ -7,6 +7,8 @@ import '../providers/auth_provider.dart';
 import '../widgets/back_arrow.dart';
 import '../widgets/certification_banner.dart';
 import '../services/api_service.dart';
+import '../screens/followers_screen.dart';
+import '../screens/following_screen.dart';
 import 'payment_screen.dart';
 
 
@@ -21,6 +23,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _triedRestoreOnce = false;
+  int _followersCount = 0;
+  int _followingCount = 0;
+  bool _isLoadingCounts = true;
 
   @override
   void initState() {
@@ -33,10 +38,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final authProvider =
           Provider.of<AuthProvider>(context, listen: false);
 
-      if (authProvider.user != null) return;
+      if (authProvider.user != null) {
+        await _loadFollowCounts(authProvider.user!.id);
+        return;
+      }
 
       await authProvider.loadCurrentUser();
+      if (authProvider.user != null) {
+        await _loadFollowCounts(authProvider.user!.id);
+      }
     });
+  }
+
+  Future<void> _loadFollowCounts(int userId) async {
+    try {
+      final followersResponse = await ApiService.instance.get(
+        '/api/users/$userId/followers',
+      );
+      final followingResponse = await ApiService.instance.get(
+        '/api/users/$userId/following',
+      );
+      if (!mounted) return;
+      final followersData = followersResponse.data;
+      final followingData = followingResponse.data;
+      if (followersData is List && followingData is List) {
+        setState(() {
+          _followersCount = followersData.length;
+          _followingCount = followingData.length;
+          _isLoadingCounts = false;
+        });
+      } else {
+        setState(() => _isLoadingCounts = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCounts = false);
+    }
+  }
+
+  void _openFollowers() {
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if (user != null) {
+      context.go('/followers/${user.id}', extra: {'userName': '${user.prenom} ${user.nom}'});
+    }
+  }
+
+  void _openFollowing() {
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if (user != null) {
+      context.go('/following/${user.id}', extra: {'userName': '${user.prenom} ${user.nom}'});
+    }
+  }
+
+  Widget _buildFollowSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: _openFollowers,
+            borderRadius: BorderRadius.circular(12),
+            child: Card(
+              elevation: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Abonnés',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    _isLoadingCounts
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            '$_followersCount',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: InkWell(
+            onTap: _openFollowing,
+            borderRadius: BorderRadius.circular(12),
+            child: Card(
+              elevation: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Abonnements',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    _isLoadingCounts
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            '$_followingCount',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -108,6 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
+              _buildFollowSection(),
               // Bannière d'avertissement d'expiration de certification vendeur
               CertificationBanner(
                 sellerVerifiedUntil: user.sellerVerifiedUntil,

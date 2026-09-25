@@ -469,8 +469,15 @@ if (product.vendeur != null)
                               child: ElevatedButton.icon(
                                 icon: const Icon(Icons.store),
                                 label: Text('Voir boutique ${product.vendeurNom}'),
-                                onPressed: () => context
-                                    .push('/seller/${product.vendeurNom}'),
+                                onPressed: () {
+                                  final vendeur = product.vendeur;
+                                  final sellerId = vendeur is Map<String, dynamic>
+                                      ? (vendeur['id'] as num?)?.toInt()
+                                      : null;
+                                  final encoded = Uri.encodeComponent(product.vendeurNom);
+                                  final query = sellerId == null ? '' : '?sellerId=$sellerId';
+                                  context.push('/seller/$encoded$query');
+                                },
                               ),
                             ),
                         ],

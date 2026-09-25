@@ -30,6 +30,8 @@ import '../screens/chat_screen.dart';
 import '../screens/boutiques_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/privacy_policy_screen.dart';
+import '../screens/followers_screen.dart';
+import '../screens/following_screen.dart';
 import '../models/product.dart';
 
 // Router configuration
@@ -81,7 +83,8 @@ GoRoute(
       path: '/seller/:name',
       builder: (context, state) {
         final name = state.pathParameters['name']!;
-        return SellerScreen(sellerName: name);
+        final sellerId = int.tryParse(state.uri.queryParameters['sellerId'] ?? '');
+        return SellerScreen(sellerName: name, sellerId: sellerId);
       },
     ),
     GoRoute(
@@ -140,6 +143,22 @@ GoRoute(
       path: '/categories',
       builder: (context, state) => const CategoriesScreen(),
     ),
+    GoRoute(
+      path: '/followers/:userId',
+      builder: (context, state) {
+        final userId = int.parse(state.pathParameters['userId']!);
+        final userName = (state.extra as Map<String, dynamic>?)?['userName'] ?? 'Utilisateur';
+        return FollowersScreen(userId: userId, userName: userName);
+      },
+    ),
+    GoRoute(
+      path: '/following/:userId',
+      builder: (context, state) {
+        final userId = int.parse(state.pathParameters['userId']!);
+        final userName = (state.extra as Map<String, dynamic>?)?['userName'] ?? 'Utilisateur';
+        return FollowingScreen(userId: userId, userName: userName);
+      },
+    ),
   ],
   redirect: (context, state) {
     RouteHistory.add(state.uri.toString());
@@ -167,6 +186,8 @@ GoRoute(
       '/profile',
       '/categories',
       '/product', // fallback (route param peut ne pas matcher exactement)
+      '/followers',
+      '/following',
     };
 
 

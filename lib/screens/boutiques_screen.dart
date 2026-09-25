@@ -71,9 +71,19 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
     return filtered;
   }
 
-  void _goToSeller(String nom) {
+  int? _sellerId(Product product) {
+    final vendeur = product.vendeur;
+    if (vendeur is Map<String, dynamic>) {
+      return (vendeur['id'] as num?)?.toInt();
+    }
+    return null;
+  }
+
+  void _goToSeller(String nom, Product product) {
     final encoded = Uri.encodeComponent(nom);
-    context.push('/seller/$encoded');
+    final sellerId = _sellerId(product);
+    final query = sellerId == null ? '' : '?sellerId=$sellerId';
+    context.push('/seller/$encoded$query');
   }
 
   @override
@@ -194,10 +204,10 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
                           ),
                           trailing: IconButton(
                             icon: const Icon(Icons.storefront, color: Colors.blue),
-                            onPressed: () => _goToSeller(nom),
+                            onPressed: () => _goToSeller(nom, product),
                             tooltip: 'Voir la boutique',
                           ),
-                          onTap: () => _goToSeller(nom),
+                           onTap: () => _goToSeller(nom, product),
                         ),
                       );
                     },
