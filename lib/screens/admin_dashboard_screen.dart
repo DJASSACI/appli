@@ -9,6 +9,8 @@ import '../providers/orders_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/back_arrow.dart';
 import '../providers/products_provider.dart';
+import '../screens/certification_info_form_screen.dart';
+import '../screens/admin_promotion_form_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -232,7 +234,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               childAspectRatio: 1.2,
                               children: [
                                 GestureDetector(
-                                  onTap: loadAdminUsers,
+                                  onTap: () => context.push('/admin/users'),
                                   child: _StatCard(
                                     title: '1. Total utilisateurs',
                                     subtitle:
@@ -253,6 +255,61 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         stats!['totalProducts'].toString(),
                                     icon: Icons.inventory_2,
                                     color: Colors.green,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/certification-info-form'),
+                                  child: _StatCard(
+                                    title: 'Enregistrer une certification',
+                                    subtitle:
+                                        'Enregistrer les informations d\'un vendeur',
+                                    value: '',
+                                    icon: Icons.assignment_add,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/certified-list'),
+                                  child: _StatCard(
+                                    title: 'Tous les certifiés',
+                                    subtitle:
+                                        'Voir la liste des certifications enregistrées',
+                                    value: '',
+                                    icon: Icons.verified_user,
+                                    color: Colors.purple,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/promotion-form'),
+                                  child: _StatCard(
+                                    title: 'Vendre en promotion',
+                                    subtitle:
+                                        'Créer un produit promotionnel',
+                                    value: '',
+                                    icon: Icons.local_offer,
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/orders'),
+                                  child: _StatCard(
+                                    title: 'Toutes les commandes',
+                                    subtitle:
+                                        'Voir la liste complète des commandes',
+                                    value: '',
+                                    icon: Icons.list_alt,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/delivered-orders'),
+                                  child: _StatCard(
+                                    title: 'Tous les colis livrés',
+                                    subtitle:
+                                        'Voir la liste des colis livrés',
+                                    value: '',
+                                    icon: Icons.local_shipping,
+                                    color: Colors.teal,
                                   ),
                                 ),
                               ],

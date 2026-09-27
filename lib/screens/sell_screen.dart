@@ -30,9 +30,11 @@ class _SellScreenState extends State<SellScreen> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   String? _selectedCategory;
-String? _selectedPaymentMethod;
+  String? _selectedPaymentMethod;
   File? _imageFile;
   String? _imageUrl;
+  File? _videoFile;
+  String? _videoUrl;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
   final _apiService = ApiService();
@@ -87,11 +89,25 @@ Future<void> _pickImage() async {
 
   setState(() {
     _imageFile = File(image.path);
-    // Reset URL: l’upload ne se fera qu’au moment du clic sur “Publier produit”.
+    // Reset URL: l'upload ne se fera qu'au moment du clic sur "Publier produit".
     _imageUrl = null;
   });
 }
 
+
+Future<void> _pickVideo() async {
+  final XFile? video = await _picker.pickVideo(
+    source: ImageSource.gallery,
+  );
+
+  if (video == null) return;
+  if (!mounted) return;
+
+  setState(() {
+    _videoFile = File(video.path);
+    _videoUrl = null;
+  });
+}
 
 
   Future<void> _createProduct() async {
@@ -126,10 +142,16 @@ final productName = _nameController.text.replaceAll(RegExp(r'[^\w\s-]'), '');
 final imageUrl = await CloudinaryStorageService()
             .uploadProductImage(_imageFile!, productName);
 
+String? videoUrl;
+if (_videoFile != null) {
+  videoUrl = await CloudinaryStorageService()
+      .uploadProductVideo(_videoFile!, productName);
+}
 
         if (!mounted) return;
         setState(() {
           _imageUrl = imageUrl;
+          _videoUrl = videoUrl;
           _isUploading = false;
         });
 
@@ -145,6 +167,7 @@ final imageUrl = await CloudinaryStorageService()
           'paymentMethod': _selectedPaymentMethod,
           'paymentAccount': _paymentAccountController.text,
           'image': imageUrl,
+          'videoUrl': videoUrl,
         });
 
 
@@ -247,6 +270,76 @@ context.go('/home');
                               Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
                               SizedBox(height: 8),
                               Text("Aucune image sélectionnée"),
+                            ],
+                          ),
+                        if (_isUploading)
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Video picker (optional)
+                GestureDetector(
+                  onTap: _pickVideo,
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (_videoUrl != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              color: Colors.black,
+                              child: const Center(
+                                child: Icon(Icons.videocam, size: 50, color: Colors.white),
+                              ),
+                            ),
+                          )
+                        else if (_videoFile != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              color: Colors.black,
+                              child: const Center(
+                                child: Icon(Icons.videocam, size: 50, color: Colors.white),
+                              ),
+                            ),
+                          )
+                        else
+                          const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                              SizedBox(height: 8),
+                              Text("Vidéo facultative (cliquer pour sélectionner)"),
                             ],
                           ),
                         if (_isUploading)

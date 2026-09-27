@@ -1,51 +1,46 @@
 import 'package:flutter/foundation.dart';
 
-class Product {
+class Promotion {
   final int id;
   final String name;
   final double price;
   final String image;
   final String description;
   final String categorie;
-  final dynamic vendeur;
-  final String vendeurNom;
-  final String vendeurCompte; // Téléphone/WhatsApp vendeur
-  final String vendeurLocalisation;
+  final int discountPercent;
+  final double discountedPrice;
   final String datePublication;
   final bool isActive;
-  final String? videoUrl;
 
-  const Product({
+  const Promotion({
     required this.id,
     required this.name,
     required this.price,
     required this.image,
     required this.description,
     required this.categorie,
-    required this.vendeur,
-    required this.vendeurNom,
-    required this.vendeurCompte,
-    required this.vendeurLocalisation,
+    required this.discountPercent,
+    required this.discountedPrice,
     required this.datePublication,
     required this.isActive,
-    this.videoUrl,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
+  factory Promotion.fromJson(Map<String, dynamic> json) {
+    final price = (json['price'] ?? 0).toDouble();
+    final discount = (json['discountPercent'] ?? 0).toInt();
+    final discountedPrice = price * (1 - discount / 100);
+
+    return Promotion(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
+      price: price,
       image: json['image'] ?? '',
       description: json['description'] ?? '',
       categorie: json['categorie'] ?? '',
-      vendeur: json['vendeur'],
-      vendeurNom: json['vendeurNom'] ?? '',
-      vendeurCompte: json['vendeurCompte'] ?? '',
-      vendeurLocalisation: json['vendeurLocalisation'] ?? '',
+      discountPercent: discount,
+      discountedPrice: discountedPrice,
       datePublication: json['datePublication'] ?? '',
       isActive: json['isActive'] ?? true,
-      videoUrl: json['videoUrl'],
     );
   }
 
@@ -56,11 +51,9 @@ class Product {
     'image': image,
     'description': description,
     'categorie': categorie,
-    'vendeur': vendeur,
-    'vendeurCompte': vendeurCompte,
-    'vendeurLocalisation': vendeurLocalisation,
+    'discountPercent': discountPercent,
+    'discountedPrice': discountedPrice,
+    'datePublication': datePublication,
     'isActive': isActive,
-    'videoUrl': videoUrl,
   };
 }
-

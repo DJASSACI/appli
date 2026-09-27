@@ -100,4 +100,28 @@ class OrdersProvider with ChangeNotifier {
       throw e; // Let caller handle error
     }
   }
+
+  Future<void> updateOrderStatus(int orderId, String statut) async {
+    try {
+      await apiService.put(
+        '/api/orders/$orderId/status',
+        data: {'statut': statut},
+      );
+      await fetchOrders();
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<void> updateDeliveryInfo(int orderId, Map<String, dynamic> data) async {
+    try {
+      await apiService.put(
+        '/api/orders/$orderId/delivery-info',
+        data: data,
+      );
+      await fetchMyOrders();
+    } catch (e) {
+      throw e;
+    }
+  }
 }

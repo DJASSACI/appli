@@ -94,6 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Profil':
         context.go('/profile');
         break;
+      case 'Promotions':
+        context.go('/promotions');
+        break;
       default:
         _onCategorySelected('');
         break;

@@ -6,7 +6,7 @@ class BackArrow extends StatelessWidget {
 
   const BackArrow({super.key, this.color});
 
-  @override
+@override
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(
@@ -16,11 +16,10 @@ class BackArrow extends StatelessWidget {
       onPressed: () {
         final path = GoRouterState.of(context).uri.toString();
 
-        if (path == '/my-orders' || path == '/my-seller-orders') {
+        if (path == '/my-seller-orders') {
           context.go('/profile');
           return;
         }
-
 
 
         if (path == '/my-products' ||

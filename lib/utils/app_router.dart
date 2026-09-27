@@ -32,7 +32,16 @@ import '../screens/categories_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../screens/followers_screen.dart';
 import '../screens/following_screen.dart';
+import '../screens/certification_info_form_screen.dart';
+import '../screens/certified_list_screen.dart';
+import '../screens/admin_promotion_form_screen.dart';
+import '../screens/admin_orders_screen.dart';
+import '../screens/admin_delivered_orders_screen.dart';
+import '../screens/admin_users_screen.dart';
+import '../screens/promotion_screen.dart';
+import '../screens/promotion_detail_screen.dart';
 import '../models/product.dart';
+import '../models/promotion.dart';
 
 // Router configuration
 
@@ -130,6 +139,41 @@ GoRoute(
     GoRoute(
       path: '/admin-dashboard',
       builder: (context, state) => const AdminDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/admin/certification-info-form',
+      builder: (context, state) => const CertificationInfoFormScreen(),
+    ),
+    GoRoute(
+      path: '/admin/certified-list',
+      builder: (context, state) => const CertifiedListScreen(),
+    ),
+    GoRoute(
+      path: '/admin/promotion-form',
+      builder: (context, state) => const AdminPromotionFormScreen(),
+    ),
+    GoRoute(
+      path: '/admin/orders',
+      builder: (context, state) => const AdminOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/admin/delivered-orders',
+      builder: (context, state) => const AdminDeliveredOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/admin/users',
+      builder: (context, state) => const AdminUsersScreen(),
+    ),
+    GoRoute(
+      path: '/promotions',
+      builder: (context, state) => const PromotionScreen(),
+    ),
+    GoRoute(
+      path: '/promotion-detail',
+      builder: (context, state) {
+        final promotion = state.extra as Promotion;
+        return PromotionDetailScreen(promotion: promotion);
+      },
     ),
     GoRoute(
       path: '/privacy-policy',

@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'providers/products_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
+import 'providers/promotions_provider.dart';
 import 'screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -18,6 +19,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'providers/chat_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Initialize auth session from local storage before app starts
 /// This enables instant login restoration without API calls
@@ -81,6 +83,26 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await firebase_auth.FirebaseAuth.instance.signInAnonymously();
+
+  // Initialize local notifications
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Create notification channel for Android
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'djassaci_channel',
+    'Djassaci Notifications',
+    description: 'Channel for Djassaci app notifications',
+    importance: Importance.high,
+  );
+  await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
+
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   await messaging.requestPermission(
@@ -104,13 +126,48 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     print('Notification ouverte');
+    print('Data: ${message.data}');
+    if (message.data['type'] != null) print('Type: ${message.data['type']}');
+    if (message.data['orderId'] != null) print('OrderId: ${message.data['orderId']}');
+    if (message.data['sellerId'] != null) print('SellerId: ${message.data['sellerId']}');
   });
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+
+  // Handle notification when app is opened from terminated state
+  final RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    print('App opened from terminated state via notification');
+    print('Data: ${initialMessage.data}');
+    if (initialMessage.data['type'] != null) print('Type: ${initialMessage.data['type']}');
+    if (initialMessage.data['orderId'] != null) print('OrderId: ${initialMessage.data['orderId']}');
+    if (initialMessage.data['sellerId'] != null) print('SellerId: ${initialMessage.data['sellerId']}');
+  }
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print('Got a message whilst in the foreground!');
     print('Message data: ${message.data}');
     if (message.notification != null) {
       print('Message also contained a notification: ${message.notification}');
     }
+
+    // Show local notification when app is in foreground
+    final String title = message.notification?.title ?? 'Nouvelle notification';
+    final String body = message.notification?.body ?? '';
+    
+    await flutterLocalNotificationsPlugin.show(
+      message.hashCode,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'djassaci_channel',
+          'Djassaci Notifications',
+          channelDescription: 'Channel for Djassaci app notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: jsonEncode(message.data),
+    );
   });
 
   // Restore session BEFORE running app
@@ -141,6 +198,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductsProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
+        ChangeNotifierProvider(create: (_) => PromotionsProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
 

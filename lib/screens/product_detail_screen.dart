@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
@@ -40,6 +41,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     'Wave',
     'Espèce',
   ];
+
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final state = GoRouterState.of(context);
+    final productId = state.pathParameters['id'];
+    final productFromExtra = state.extra as Product?;
+    Product? product;
+    if (productId != null) {
+      product = context
+          .read<ProductsProvider>()
+          .products
+          .firstWhere((p) => p.id.toString() == productId, orElse: () => null as Product);
+    } else if (productFromExtra != null) {
+      product = productFromExtra;
+    }
+    if (product != null && product.videoUrl != null && product.videoUrl!.isNotEmpty) {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(product.videoUrl!));
+      await _videoController!.initialize();
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    _phoneController.dispose();
+    _accountController.dispose();
+    _nomLivraisonController.dispose();
+    _telLivraisonController.dispose();
+    _villeCommuneController.dispose();
+    _quartierController.dispose();
+    super.dispose();
+  }
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -334,6 +380,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
             ),
+            // Video player (if videoUrl exists)
+            if (product.videoUrl != null && product.videoUrl!.isNotEmpty)
+              Container(
+                width: double.infinity,
+                color: Colors.black,
+                child: _isVideoInitialized && _videoController != null
+                    ? AspectRatio(
+                        aspectRatio: _videoController!.value.aspectRatio,
+                        child: VideoPlayer(_videoController!),
+                      )
+                    : Container(
+                        height: 200,
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+              ),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -536,17 +597,6 @@ if (product.vendeur != null)
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _accountController.dispose();
-    _nomLivraisonController.dispose();
-    _telLivraisonController.dispose();
-    _villeCommuneController.dispose();
-    _quartierController.dispose();
-    super.dispose();
   }
 }
 

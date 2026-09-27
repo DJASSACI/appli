@@ -91,7 +91,7 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
     return await instance.post(endpointOrders, data: data);
   }
 
-  /// Retourne directement l'URL checkout (champ checkout_url) du backend GeniusPay.
+/// Retourne directement l'URL checkout (champ checkout_url) du backend GeniusPay.
   ///
   /// Exemple: https://...
   Future<String> initGeniusPayCheckoutUrl({
@@ -110,7 +110,6 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
       },
     );
 
-
     final data = response.data;
     if (data is Map<String, dynamic>) {
       final url = data['checkout_url'];
@@ -121,5 +120,28 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
     return '';
   }
 
-
+Future<Response> saveCertificationInfo({
+    required String boutiqueNom,
+    required String rectoCiUrl,
+    required String versoCiUrl,
+    required String lieu,
+    required String photoVendeurUrl,
+    required String telephone,
+  }) async {
+    try {
+      return await _dio.post(
+        '/api/admin/certification-info',
+        data: {
+          'boutiqueNom': boutiqueNom,
+          'rectoCiUrl': rectoCiUrl,
+          'versoCiUrl': versoCiUrl,
+          'lieu': lieu,
+          'photoVendeurUrl': photoVendeurUrl,
+          'telephone': telephone,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
