@@ -42,6 +42,24 @@ class CloudinaryStorageService {
     }
   }
 
+  Future<List<String>> uploadProductImages(List<File> imageFiles, String productName) async {
+    print("🔄 Upload multiple product images: $productName (${imageFiles.length} images)");
+    
+    final List<String> urls = [];
+    for (int i = 0; i < imageFiles.length; i++) {
+      final file = imageFiles[i];
+      try {
+        final url = await uploadProductImage(file, "${productName}_${i + 1}");
+        urls.add(url);
+      } catch (e) {
+        print("❌ Erreur upload image ${i + 1}: $e");
+        rethrow;
+      }
+    }
+    print("✅ ${urls.length} images uploadées");
+    return urls;
+  }
+
   Future<String> uploadAvatar(File imageFile) async {
     print("🔄 Upload Avatar Cloudinary");
 
@@ -110,42 +128,6 @@ class CloudinaryStorageService {
       return url;
     } else {
       print("❌ Erreur Cloudinary Certification: ${res.body}");
-      throw Exception("Upload failed: ${response.statusCode}");
-    }
-  }
-
-  Future<String> uploadProductVideo(File videoFile, String productName) async {
-    print("🔄 Upload Product Video Cloudinary: $productName");
-
-    final url = Uri.parse(
-      "https://api.cloudinary.com/v1_1/$cloudName/video/upload",
-    );
-
-    final request = http.MultipartRequest("POST", url);
-
-    request.fields['upload_preset'] = uploadPreset;
-    request.fields['folder'] = "product_videos";
-
-    request.files.add(
-      await http.MultipartFile.fromPath('file', videoFile.path),
-    );
-
-    final response = await request.send();
-    final res = await http.Response.fromStream(response);
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(res.body);
-      final url = data["secure_url"];
-
-      if (url == null) {
-        throw Exception("Cloudinary returned null URL");
-      }
-
-      print("✅ Product video uploadée: $url");
-
-      return url;
-    } else {
-      print("❌ Erreur Cloudinary Video: ${res.body}");
       throw Exception("Upload failed: ${response.statusCode}");
     }
   }

@@ -39,6 +39,39 @@ class _HomeScreenState extends State<HomeScreen> {
     Color(0xFFF1F5F9),
   ];
 
+  static const Map<String,IconData> _categoryIcons = {
+    'Téléphones': Icons.smartphone,
+    'Ordinateurs': Icons.computer,
+    'Tablettes': Icons.tablet,
+    'Audio': Icons.headphones,
+    'TV': Icons.tv,
+    'Électroménager': Icons.kitchen,
+    'Accessoires': Icons.headset_mic,
+    'Montres': Icons.watch,
+    'Vêtements': Icons.checkroom,
+    'Chaussures': Icons.sports_soccer,
+    'Sacs': Icons.backpack,
+    'Beauté & Cosmétiques': Icons.face,
+    'Bijoux': Icons.diamond,
+    'Maison & Décoration': Icons.home,
+    'Meubles': Icons.chair,
+    'Cuisine': Icons.kitchen,
+    'Jardin & Extérieur': Icons.local_florist,
+    'Sports & Loisirs': Icons.sports_soccer,
+    'Jeux & Jouets': Icons.toys,
+    'Livres & Fournitures': Icons.menu_book,
+    'Bébé & Enfant': Icons.child_care,
+    'Auto & Moto': Icons.motorcycle,
+    'Immobilier': Icons.apartment,
+    'Services': Icons.handyman,
+    'Alimentation': Icons.restaurant,
+    'Animaux': Icons.pets,
+    'Instruments de musique': Icons.music_note,
+    'Matériel professionnel': Icons.business_center,
+    'Électronique': Icons.devices,
+    'Autre': Icons.category,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'Mes produits':
         context.go('/my-products');
+        break;
+      case 'Services':
+        context.go('/services');
         break;
       case 'Profil':
         context.go('/profile');
@@ -152,11 +188,16 @@ class _HomeScreenState extends State<HomeScreen> {
           if (!isSmallScreen) const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildWhiteSurface(screenWidth, horizontalPadding),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () =>
+            Provider.of<ProductsProvider>(context, listen: false).fetchProducts(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              _buildWhiteSurface(screenWidth, horizontalPadding),
+            ],
+          ),
         ),
       ),
     );
@@ -287,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildShortcutsGrid(double horizontalPadding) {
     final items = [
-      _ShortcutData(Icons.grid_view, 'Produits'),
+      _ShortcutData(Icons.home_repair_service, 'Services'),
       _ShortcutData(Icons.storefront, 'Boutiques'),
       _ShortcutData(Icons.add_circle, 'Vendre'),
       _ShortcutData(Icons.shopping_bag, 'Commandes'),
@@ -384,11 +425,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ? _turquoise
         : _pastelColors['Tous' == label ? 0 : idx].withValues(alpha: 0.7);
     final textColor = isSelected ? _white : Colors.grey.shade800;
+    final icon = label == 'Tous' ? Icons.all_inclusive : _categoryIcons[label];
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
         label: Text(label, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+        avatar: icon != null ? Icon(icon, size: 18, color: textColor) : null,
         backgroundColor: bgColor,
         selected: isSelected,
         selectedColor: _turquoise,

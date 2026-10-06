@@ -63,26 +63,39 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   IconData _categoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'téléphones':
-        return Icons.phone_android;
-      case 'ordinateurs':
-        return Icons.computer;
-      case 'audio':
-        return Icons.headphones;
-      case 'accessoires':
-        return Icons.devices_other;
-      case 'tablettes':
-        return Icons.tablet;
-      case 'montres':
-        return Icons.watch;
-      case 'tv':
-        return Icons.tv;
-      case 'électroménager':
-        return Icons.kitchen;
-      default:
-        return Icons.category;
-    }
+    const icons = <String,IconData>{
+      'Téléphones': Icons.smartphone,
+      'Ordinateurs': Icons.computer,
+      'Tablettes': Icons.tablet,
+      'Audio': Icons.headphones,
+      'TV': Icons.tv,
+      'Électroménager': Icons.kitchen,
+      'Accessoires': Icons.headset_mic,
+      'Montres': Icons.watch,
+      'Vêtements': Icons.checkroom,
+      'Chaussures': Icons.sports_soccer,
+      'Sacs': Icons.backpack,
+      'Beauté & Cosmétiques': Icons.face,
+      'Bijoux': Icons.diamond,
+      'Maison & Décoration': Icons.home,
+      'Meubles': Icons.chair,
+      'Cuisine': Icons.restaurant,
+      'Jardin & Extérieur': Icons.local_florist,
+      'Sports & Loisirs': Icons.sports_soccer,
+      'Jeux & Jouets': Icons.toys,
+      'Livres & Fournitures': Icons.menu_book,
+      'Bébé & Enfant': Icons.child_care,
+      'Auto & Moto': Icons.motorcycle,
+      'Immobilier': Icons.apartment,
+      'Services': Icons.handyman,
+      'Alimentation': Icons.restaurant,
+      'Animaux': Icons.pets,
+      'Instruments de musique': Icons.music_note,
+      'Matériel professionnel': Icons.business_center,
+      'Électronique': Icons.devices,
+      'Autre': Icons.category,
+    };
+    return icons[category] ?? Icons.category;
   }
 
   int _gridCount(BuildContext context) {

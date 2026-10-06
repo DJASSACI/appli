@@ -25,6 +25,20 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
   double? _buyerLng;
   bool _isGettingGps = false;
 
+  late final PageController _pageController;
+  int _currentImageIndex = 0;
+
+  List<String> get _promotionImages {
+    final images = widget.promotion.images;
+    return images.isNotEmpty ? images : [widget.promotion.image];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
   final TextEditingController _nomLivraisonController = TextEditingController();
@@ -355,6 +369,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
 
   @override
   void dispose() {
+    _pageController.dispose();
     _phoneController.dispose();
     _accountController.dispose();
     _nomLivraisonController.dispose();
@@ -380,18 +395,57 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: GestureDetector(
-                onTap: () => _showFullScreenImage(promotion.image),
-                child: Image.network(
-                  promotion.image,
-                  width: double.infinity,
-                  height: 250,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 250,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.broken_image, size: 64, color: Colors.grey),
-                  ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 250,
+                child: Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () =>
+                          _showFullScreenImage(_promotionImages[_currentImageIndex]),
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: _promotionImages.length,
+                        onPageChanged: (index) {
+                          setState(() => _currentImageIndex = index);
+                        },
+                        itemBuilder: (context, index) {
+                          final imageUrl = _promotionImages[index];
+                          return Image.network(
+                            imageUrl,
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 250,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_promotionImages.length > 1)
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_currentImageIndex + 1} / ${_promotionImages.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

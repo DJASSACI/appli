@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _numeroController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
               key: _formKey,
               child: SingleChildScrollView(
                 child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+               mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.login,
@@ -63,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Numéro de téléphone',
                       prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
@@ -76,12 +76,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Mot de passe',
-                      prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Remplissez tous les champs';
@@ -120,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _passwordController.text,
                                 );
                                 if (success) {
-                                  if (mounted) {
+                                  if (context.mounted) {
                                     context.go('/home');
                                   }
                                 }
@@ -153,6 +160,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-
-

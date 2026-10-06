@@ -411,10 +411,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Center(child: _buildAvatar(user)),
               const SizedBox(height: 20),
-              Text(
-                '${user.prenom} ${user.nom}',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${user.prenom} ${user.nom}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (user.sellerVerified == true) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Certifié',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               Text(
                 user.numero,
@@ -464,7 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               */
               ElevatedButton.icon(
-                onPressed: () => context.go('/my-products'),
+                onPressed: () => context.go('/home'),
                 icon: const Icon(Icons.inventory_2),
                 label: const Text('Mes produits'),
               ),

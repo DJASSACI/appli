@@ -37,6 +37,13 @@ if (response.statusCode == 201) {
       }
       return data;
     }
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      final msg = (data['message'] ?? data['error']);
+      if (msg is String && msg.trim().isNotEmpty) {
+        throw Exception(msg);
+      }
+    }
     throw Exception('Registration failed');
   }
 

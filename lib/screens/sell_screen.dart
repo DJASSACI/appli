@@ -1,19 +1,12 @@
- import 'dart:io';
-import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
-// import 'package:form_data/form_data.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/products_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/cloudinary_storage_service.dart';
-
-
-import '../utils/constants.dart';
-import '../models/product.dart';
 import '../widgets/back_arrow.dart';
 
 class SellScreen extends StatefulWidget {
@@ -31,14 +24,11 @@ class _SellScreenState extends State<SellScreen> {
   final _descriptionController = TextEditingController();
   String? _selectedCategory;
   String? _selectedPaymentMethod;
-  File? _imageFile;
-  String? _imageUrl;
-  File? _videoFile;
-  String? _videoUrl;
+  List<File> _imageFiles = [];
+  List<String> _imageUrls = [];
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
   final _apiService = ApiService();
-  final CloudinaryStorageService _storageService = CloudinaryStorageService();
 
   final _vendeurCompteController = TextEditingController();
   final _paymentAccountController = TextEditingController();
@@ -77,43 +67,39 @@ class _SellScreenState extends State<SellScreen> {
   ];
 
 
+Future<void> _pickImages() async {
+  final List<XFile> images = await _picker.pickMultiImage();
 
-
-Future<void> _pickImage() async {
-  final XFile? image = await _picker.pickImage(
-    source: ImageSource.gallery,
-  );
-
-  if (image == null) return;
+  if (images.isEmpty) return;
   if (!mounted) return;
 
+  final newFiles = images.map((xfile) => File(xfile.path)).toList();
   setState(() {
-    _imageFile = File(image.path);
-    // Reset URL: l'upload ne se fera qu'au moment du clic sur "Publier produit".
-    _imageUrl = null;
+    _imageFiles.addAll(newFiles);
+    // Reset URLs: upload will happen when clicking "Publier produit".
+    _imageUrls = [];
   });
 }
 
-
-Future<void> _pickVideo() async {
-  final XFile? video = await _picker.pickVideo(
-    source: ImageSource.gallery,
-  );
-
-  if (video == null) return;
-  if (!mounted) return;
-
+void _removeImage(int index) {
   setState(() {
-    _videoFile = File(video.path);
-    _videoUrl = null;
+    _imageFiles.removeAt(index);
+    if (index < _imageUrls.length) {
+      _imageUrls.removeAt(index);
+    }
   });
 }
 
-
-  Future<void> _createProduct() async {
+Future<void> _createProduct() async {
     if (_formKey.currentState!.validate() && _selectedCategory != null && _selectedPaymentMethod != null) {
+      if (_imageFiles.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur: Au moins une image requise'), backgroundColor: Colors.red),
+        );
+        return;
+      }
       try {
-        debugPrint('🔥 [SELL_SCREEN] DÉBUT CREATE PRODUCT - Image: ${_imageFile?.path ?? "NULL"}');
+        debugPrint('🔥 [SELL_SCREEN] DÉBUT CREATE PRODUCT - Images: ${_imageFiles.length}');
 
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final user = authProvider.user;
@@ -126,36 +112,24 @@ Future<void> _pickVideo() async {
           return;
         }
 
-        if (_imageFile == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erreur: Image requise'), backgroundColor: Colors.red),
-          );
-          return;
-        }
-
         setState(() {
           _isUploading = true;
         });
 
-final productName = _nameController.text.replaceAll(RegExp(r'[^\w\s-]'), '');
+        final productName = _nameController.text.replaceAll(RegExp(r'[^\w\s-]'), '');
 
-final imageUrl = await CloudinaryStorageService()
-            .uploadProductImage(_imageFile!, productName);
-
-String? videoUrl;
-if (_videoFile != null) {
-  videoUrl = await CloudinaryStorageService()
-      .uploadProductVideo(_videoFile!, productName);
-}
+        final imageUrls = await CloudinaryStorageService()
+            .uploadProductImages(_imageFiles, productName);
 
         if (!mounted) return;
         setState(() {
-          _imageUrl = imageUrl;
-          _videoUrl = videoUrl;
+          _imageUrls = imageUrls;
           _isUploading = false;
         });
 
-        debugPrint('📤 [SELL_SCREEN] Using Firebase URL: $imageUrl');
+        debugPrint('📤 [SELL_SCREEN] Using Cloudinary URLs: $imageUrls');
+
+        final mainImage = imageUrls.isNotEmpty ? imageUrls.first : '';
 
         final response = await _apiService.post('/api/products', data: {
           'name': _nameController.text,
@@ -166,10 +140,9 @@ if (_videoFile != null) {
           'vendeurLocalisation': user.address,
           'paymentMethod': _selectedPaymentMethod,
           'paymentAccount': _paymentAccountController.text,
-          'image': imageUrl,
-          'videoUrl': videoUrl,
+          'image': mainImage,
+          'images': imageUrls,
         });
-
 
 
         if (response.statusCode == 201) {
@@ -178,7 +151,7 @@ if (_videoFile != null) {
               const SnackBar(content: Text('Produit publié !'), backgroundColor: Colors.green),
             );
             await Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
-context.go('/home');
+            context.go('/home');
           }
         }
       } catch (e) {
@@ -186,6 +159,10 @@ context.go('/home');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isUploading = false);
         }
       }
     }
@@ -224,151 +201,206 @@ context.go('/home');
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
+                // Section images
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (_imageUrl != null)
-                          ClipRRect(
+                        Text(
+                          'Photos du produit (${_imageFiles.length})',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        if (_imageFiles.isNotEmpty)
+                          TextButton.icon(
+                            onPressed: _isUploading ? null : _pickImages,
+                            icon: const Icon(Icons.add_a_photo),
+                            label: const Text('Ajouter'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_imageFiles.isEmpty)
+                      GestureDetector(
+                        onTap: _pickImages,
+                        child: Container(
+                          height: 180,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey, width: 2, style: BorderStyle.solid),
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              _imageUrl!,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: const Center(child: CircularProgressIndicator()),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return _imageFile != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(_imageFile!, fit: BoxFit.cover),
-                                      )
-                                    : Container(color: Colors.grey[300]);
-                              },
-                            ),
-                          )
-                        else if (_imageFile != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(_imageFile!, fit: BoxFit.cover),
-                          )
-                        else
-                          const Column(
+                            color: Colors.grey.shade50,
+                          ),
+                          child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
                               SizedBox(height: 8),
-                              Text("Aucune image sélectionnée"),
+                              Text("Appuyez pour sélectionner des photos", style: TextStyle(color: Colors.grey)),
+                              SizedBox(height: 4),
+                              Text("Sélection multiple autorisée", style: TextStyle(color: Colors.grey, fontSize: 12)),
                             ],
                           ),
-                        if (_isUploading)
-                          Positioned(
-                            bottom: 8,
-                            right: 8,
+                        ),
+                      )
+                    else
+                      Column(
+                        children: [
+                          // Image principale (grande)
+                          GestureDetector(
+                            onTap: _pickImages,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              height: 200,
+                              width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.black54,
+                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: Stack(
+                                fit: StackFit.expand,
                                 children: [
-                                  SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  _imageUrls.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.network(
+                                            _imageUrls.first,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Container(
+                                                color: Colors.grey[300],
+                                                child: const Center(child: CircularProgressIndicator()),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: Image.file(_imageFiles.first, fit: BoxFit.cover),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      : ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(_imageFiles.first, fit: BoxFit.cover),
+                                        ),
+                                  if (_isUploading)
+                                    Positioned(
+                                      bottom: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(
+                                              width: 12,
+                                              height: 12,
+                                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text('Principale', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                    ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
                                 ],
                               ),
                             ),
                           ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Video picker (optional)
-                GestureDetector(
-                  onTap: _pickVideo,
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (_videoUrl != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              color: Colors.black,
-                              child: const Center(
-                                child: Icon(Icons.videocam, size: 50, color: Colors.white),
+                          const SizedBox(height: 12),
+                          // Miniatures
+                          if (_imageFiles.length > 1)
+                            SizedBox(
+                              height: 80,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _imageFiles.length,
+                                itemBuilder: (context, index) {
+                                  final isMain = index == 0;
+                                  return Container(
+                                    width: 70,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    child: Stack(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            // Déplacer l'image sélectionnée en première position (principale)
+                                            setState(() {
+                                              final file = _imageFiles.removeAt(index);
+                                              _imageFiles.insert(0, file);
+                                              if (index < _imageUrls.length) {
+                                                final url = _imageUrls.removeAt(index);
+                                                _imageUrls.insert(0, url);
+                                              }
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 70,
+                                            height: 70,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: isMain ? Colors.blue : Colors.transparent,
+                                                width: 3,
+                                              ),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: _imageUrls.length > index
+                                                  ? Image.network(_imageUrls[index], fit: BoxFit.cover, width: 70, height: 70)
+                                                  : Image.file(_imageFiles[index], fit: BoxFit.cover, width: 70, height: 70),
+                                            ),
+                                          ),
+                                        ),
+                                        if (!isMain)
+                                          Positioned(
+                                            top: 2,
+                                            right: 2,
+                                            child: GestureDetector(
+                                              onTap: () => _removeImage(index),
+                                              child: Container(
+                                                padding: const EdgeInsets.all(2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          )
-                        else if (_videoFile != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              color: Colors.black,
-                              child: const Center(
-                                child: Icon(Icons.videocam, size: 50, color: Colors.white),
-                              ),
+                          const SizedBox(height: 8),
+                          if (_imageFiles.isNotEmpty)
+                            TextButton.icon(
+                              onPressed: _isUploading ? null : _pickImages,
+                              icon: const Icon(Icons.add_a_photo),
+                              label: const Text('Ajouter d\'autres photos'),
                             ),
-                          )
-                        else
-                          const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text("Vidéo facultative (cliquer pour sélectionner)"),
-                            ],
-                          ),
-                        if (_isUploading)
-                          Positioned(
-                            bottom: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -459,7 +491,7 @@ context.go('/home');
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: (_isUploading || _imageFile == null) ? null : _createProduct,
+                  onPressed: (_isUploading || _imageFiles.isEmpty) ? null : _createProduct,
                   // Numéro compte paiement vendeur: $_paymentAccountController
                   // Moyen paiement vendeur: $_selectedPaymentMethod
                   icon: const Icon(Icons.sell),

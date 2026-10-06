@@ -5,6 +5,7 @@ class Product {
   final String name;
   final double price;
   final String image;
+  final List<String> images;
   final String description;
   final String categorie;
   final dynamic vendeur;
@@ -13,13 +14,13 @@ class Product {
   final String vendeurLocalisation;
   final String datePublication;
   final bool isActive;
-  final String? videoUrl;
 
   const Product({
     required this.id,
     required this.name,
     required this.price,
     required this.image,
+    this.images = const [],
     required this.description,
     required this.categorie,
     required this.vendeur,
@@ -28,15 +29,16 @@ class Product {
     required this.vendeurLocalisation,
     required this.datePublication,
     required this.isActive,
-    this.videoUrl,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> imagesJson = json['images'] ?? [];
     return Product(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       price: (json['price'] ?? 0).toDouble(),
       image: json['image'] ?? '',
+      images: imagesJson.map((e) => e.toString()).toList(),
       description: json['description'] ?? '',
       categorie: json['categorie'] ?? '',
       vendeur: json['vendeur'],
@@ -45,7 +47,6 @@ class Product {
       vendeurLocalisation: json['vendeurLocalisation'] ?? '',
       datePublication: json['datePublication'] ?? '',
       isActive: json['isActive'] ?? true,
-      videoUrl: json['videoUrl'],
     );
   }
 
@@ -54,13 +55,13 @@ class Product {
     'name': name,
     'price': price,
     'image': image,
+    'images': images,
     'description': description,
     'categorie': categorie,
     'vendeur': vendeur,
     'vendeurCompte': vendeurCompte,
     'vendeurLocalisation': vendeurLocalisation,
     'isActive': isActive,
-    'videoUrl': videoUrl,
   };
 }
 

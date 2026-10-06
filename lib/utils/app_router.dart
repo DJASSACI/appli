@@ -40,6 +40,7 @@ import '../screens/admin_delivered_orders_screen.dart';
 import '../screens/admin_users_screen.dart';
 import '../screens/promotion_screen.dart';
 import '../screens/promotion_detail_screen.dart';
+import '../screens/services_screen.dart';
 import '../models/product.dart';
 import '../models/promotion.dart';
 
@@ -167,6 +168,10 @@ GoRoute(
     GoRoute(
       path: '/promotions',
       builder: (context, state) => const PromotionScreen(),
+    ),
+    GoRoute(
+      path: '/services',
+      builder: (context, state) => const ServicesScreen(),
     ),
     GoRoute(
       path: '/promotion-detail',

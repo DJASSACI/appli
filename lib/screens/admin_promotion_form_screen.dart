@@ -21,7 +21,7 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
   final _categorieController = TextEditingController();
   final _discountController = TextEditingController();
 
-  File? _imageFile;
+  List<File> _imageFiles = [];
   bool _isLoading = false;
   bool _isUploading = false;
   String? _errorMessage;
@@ -29,16 +29,28 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
   final ImagePicker _picker = ImagePicker();
   final CloudinaryStorageService _cloudinary = CloudinaryStorageService();
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImages(ImageSource source) async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
-      if (pickedFile != null) {
-        setState(() => _imageFile = File(pickedFile.path));
+      final List<XFile> pickedFiles;
+      if (source == ImageSource.camera) {
+        final XFile? pickedFile = await _picker.pickImage(
+          source: source,
+          maxWidth: 1920,
+          maxHeight: 1080,
+          imageQuality: 85,
+        );
+        pickedFiles = pickedFile != null ? [pickedFile] : [];
+      } else {
+        pickedFiles = await _picker.pickMultiImage(
+          maxWidth: 1920,
+          maxHeight: 1080,
+          imageQuality: 85,
+        );
+      }
+      if (pickedFiles.isNotEmpty) {
+        setState(() {
+          _imageFiles.addAll(pickedFiles.map((xfile) => File(xfile.path)));
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -61,7 +73,7 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
               title: const Text('Prendre une photo'),
               onTap: () {
                 Navigator.pop(context);
-                _pickImage(ImageSource.camera);
+                _pickImages(ImageSource.camera);
               },
             ),
             ListTile(
@@ -69,7 +81,7 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
               title: const Text('Choisir dans la galerie'),
               onTap: () {
                 Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
+                _pickImages(ImageSource.gallery);
               },
             ),
           ],
@@ -80,7 +92,7 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
 
   Future<void> _savePromotion() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_imageFile == null) {
+    if (_imageFiles.isEmpty) {
       setState(() => _errorMessage = 'La photo du produit est obligatoire');
       return;
     }
@@ -92,7 +104,10 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
     });
 
     try {
-      final imageUrl = await _cloudinary.uploadProductImage(_imageFile!, _nameController.text.trim());
+      final imageUrls = await _cloudinary.uploadProductImages(
+        _imageFiles,
+        _nameController.text.trim(),
+      );
       if (!mounted) return;
 
       setState(() => _isUploading = false);
@@ -105,7 +120,8 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
           'description': _descriptionController.text.trim(),
           'categorie': _categorieController.text.trim(),
           'discountPercent': int.parse(_discountController.text.trim()),
-          'image': imageUrl,
+          'image': imageUrls.first,
+          'images': imageUrls,
         },
       );
 
@@ -142,43 +158,128 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
     _descriptionController.clear();
     _categorieController.clear();
     _discountController.clear();
-    _imageFile = null;
+    _imageFiles.clear();
   }
 
   Widget _buildImagePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Photo du produit *', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _showImageSourceDialog,
-          child: Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-            ),
-            child: _imageFile != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.file(_imageFile!, fit: BoxFit.cover, width: double.infinity),
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_a_photo, size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Appuyez pour ajouter une image',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                      ),
-                    ],
-                  ),
-          ),
+        Text(
+          'Photos du produit * (${_imageFiles.length})',
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
         ),
+        const SizedBox(height: 8),
+        if (_imageFiles.isEmpty)
+          GestureDetector(
+            onTap: _showImageSourceDialog,
+            child: Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade50,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_a_photo, size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Appuyez pour ajouter des images',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Sélection multiple autorisée',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Column(
+            children: [
+              // Image principale (première photo)
+              GestureDetector(
+                onTap: _showImageSourceDialog,
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(_imageFiles.first, fit: BoxFit.cover, width: double.infinity),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Miniatures des autres photos
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _imageFiles.length,
+                  itemBuilder: (context, index) {
+                    final isMain = index == 0;
+                    return Container(
+                      width: 70,
+                      margin: const EdgeInsets.only(right: 8),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isMain ? Colors.blue : Colors.transparent,
+                                width: 3,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(_imageFiles[index], fit: BoxFit.cover, width: 70, height: 70),
+                            ),
+                          ),
+                          if (!isMain)
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() => _imageFiles.removeAt(index));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _showImageSourceDialog,
+                icon: const Icon(Icons.add_a_photo),
+                label: const Text('Ajouter d\'autres photos'),
+              ),
+            ],
+          ),
         const SizedBox(height: 16),
       ],
     );
@@ -330,7 +431,7 @@ class _AdminPromotionFormScreenState extends State<AdminPromotionFormScreen> {
                           : const Icon(Icons.sell),
                   label: Text(
                     _isUploading
-                        ? 'Téléversement de l\'image...'
+                        ? 'Téléversement des images...'
                         : _isLoading
                             ? 'Publication...'
                             : 'Vendre',

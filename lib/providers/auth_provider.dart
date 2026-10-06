@@ -75,7 +75,12 @@ class AuthProvider with ChangeNotifier {
       _user = User.fromJson(data['user']);
       return true;
     } catch (e) {
-      _error = e.toString();
+      final msg = e.toString();
+      if (msg.contains('already exists') || msg.contains('phone number')) {
+        _error = 'Ce numéro est déjà utilisé.';
+      } else {
+        _error = msg;
+      }
       return false;
     } finally {
       _isLoading = false;

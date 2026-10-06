@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
@@ -11,7 +11,6 @@ import '../providers/products_provider.dart';
 
 import '../utils/constants.dart';
 import '../providers/auth_provider.dart';
-import 'package:geolocator/geolocator.dart';
 import 'payment_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -26,6 +25,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   double? _buyerLat;
   double? _buyerLng;
   bool _isGettingGps = false;
+  int _currentImageIndex = 0;
+  late PageController _pageController;
 
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
@@ -42,49 +43,171 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     'Espèce',
   ];
 
-  VideoPlayerController? _videoController;
-  bool _isVideoInitialized = false;
-
   @override
   void initState() {
     super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    final state = GoRouterState.of(context);
-    final productId = state.pathParameters['id'];
-    final productFromExtra = state.extra as Product?;
-    Product? product;
-    if (productId != null) {
-      product = context
-          .read<ProductsProvider>()
-          .products
-          .firstWhere((p) => p.id.toString() == productId, orElse: () => null as Product);
-    } else if (productFromExtra != null) {
-      product = productFromExtra;
-    }
-    if (product != null && product.videoUrl != null && product.videoUrl!.isNotEmpty) {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(product.videoUrl!));
-      await _videoController!.initialize();
-      if (mounted) {
-        setState(() {
-          _isVideoInitialized = true;
-        });
-      }
-    }
+    _pageController = PageController();
   }
 
   @override
   void dispose() {
-    _videoController?.dispose();
-    _phoneController.dispose();
-    _accountController.dispose();
-    _nomLivraisonController.dispose();
-    _telLivraisonController.dispose();
-    _villeCommuneController.dispose();
-    _quartierController.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  List<String> _getProductImages(Product product) {
+    if (product.images.isNotEmpty) {
+      return product.images;
+    }
+    return product.image.isNotEmpty ? [product.image] : [];
+  }
+
+  Widget _buildImageGallery(Product product) {
+    final images = _getProductImages(product);
+    final bool hasMultipleImages = images.length > 1;
+
+    return Column(
+      children: [
+        // Image principale avec PageView pour swipe
+        SizedBox(
+          height: 300,
+          width: double.infinity,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                itemCount: images.length,
+                onPageChanged: (index) {
+                  setState(() => _currentImageIndex = index);
+                },
+                itemBuilder: (context, index) {
+                  final imageUrl = images[index];
+                  return InkWell(
+                    onTap: () => _showFullScreenImage(images, index),
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image_not_supported, size: 50),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Indicateur 1 / N
+              if (hasMultipleImages)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '${_currentImageIndex + 1} / ${images.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // Miniatures
+        if (hasMultipleImages)
+          Container(
+            height: 80,
+            margin: const EdgeInsets.only(top: 8),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: images.length,
+              itemBuilder: (context, index) {
+                final isSelected = index == _currentImageIndex;
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: Container(
+                    width: 70,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isSelected ? Colors.blue : Colors.transparent,
+                        width: 3,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        images[index],
+                        fit: BoxFit.cover,
+                        width: 70,
+                        height: 70,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image_not_supported, size: 20),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showFullScreenImage(List<String> images, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.black,
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: PageController(initialPage: initialIndex),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return Center(
+                    child: InteractiveViewer(
+                      child: Image.network(
+                        images[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const Center(
+                          child: Icon(Icons.image_not_supported, color: Colors.white, size: 50),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              Positioned(
+                top: 24,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _getCurrentLocation() async {
@@ -328,73 +451,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 300,
-              width: double.infinity,
-              child: InkWell(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => Dialog(
-                      insetPadding: EdgeInsets.zero,
-                      backgroundColor: Colors.black,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: double.infinity,
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: InteractiveViewer(
-                                child: Image.network(
-                                  product.image,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) => const Center(
-                                    child: Icon(Icons.image_not_supported,
-                                        color: Colors.white, size: 50),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 24,
-                              right: 16,
-                              child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                child: Image.network(
-                  product.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 300,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image_not_supported, size: 50),
-                  ),
-                ),
-              ),
-            ),
-            // Video player (if videoUrl exists)
-            if (product.videoUrl != null && product.videoUrl!.isNotEmpty)
-              Container(
-                width: double.infinity,
-                color: Colors.black,
-                child: _isVideoInitialized && _videoController != null
-                    ? AspectRatio(
-                        aspectRatio: _videoController!.value.aspectRatio,
-                        child: VideoPlayer(_videoController!),
-                      )
-                    : Container(
-                        height: 200,
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-              ),
+            // Galerie d'images
+            _buildImageGallery(product),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -409,7 +467,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     '${product.price.toStringAsFixed(0)} $currencySymbol',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                      color: Colors.orange,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -539,6 +597,10 @@ if (product.vendeur != null)
                                   final query = sellerId == null ? '' : '?sellerId=$sellerId';
                                   context.push('/seller/$encoded$query');
                                 },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  foregroundColor: Colors.white,
+                                ),
                               ),
                             ),
                         ],

@@ -5,6 +5,7 @@ class Promotion {
   final String name;
   final double price;
   final String image;
+  final List<String> images;
   final String description;
   final String categorie;
   final int discountPercent;
@@ -17,6 +18,7 @@ class Promotion {
     required this.name,
     required this.price,
     required this.image,
+    this.images = const [],
     required this.description,
     required this.categorie,
     required this.discountPercent,
@@ -35,6 +37,9 @@ class Promotion {
       name: json['name'] ?? '',
       price: price,
       image: json['image'] ?? '',
+      images: (json['images'] ?? [json['image']])
+          .map<String>((e) => e.toString())
+          .toList(),
       description: json['description'] ?? '',
       categorie: json['categorie'] ?? '',
       discountPercent: discount,
@@ -49,6 +54,7 @@ class Promotion {
     'name': name,
     'price': price,
     'image': image,
+    'images': images,
     'description': description,
     'categorie': categorie,
     'discountPercent': discountPercent,

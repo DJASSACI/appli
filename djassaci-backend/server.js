@@ -16,11 +16,13 @@ const fetch = require('node-fetch');
 const chatRoutes = require('./routes/chatRoutes');
 
 const admin = require('firebase-admin');
-admin.initializeApp({
-  credential: admin.credential.cert(
-    JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  ),
-});
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    ),
+  });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -96,6 +98,9 @@ const USERS_FILE = path.join(JSON_STORAGE_DIR, 'users.json');
 const PRODUCTS_FILE = path.join(JSON_STORAGE_DIR, 'products.json');
 const ORDERS_FILE = path.join(JSON_STORAGE_DIR, 'orders.json');
 const ARTICLES_FILE = path.join(JSON_STORAGE_DIR, 'articles.json');
+const SUBSCRIPTIONS_FILE = path.join(JSON_STORAGE_DIR, 'subscriptions.json');
+const CERTIFICATION_INFO_FILE = path.join(JSON_STORAGE_DIR, 'certification_info.json');
+const PROMOTIONS_FILE = path.join(JSON_STORAGE_DIR, 'promotions.json');
 
 const ensureJSONFilesDir = () => {
   try {
@@ -129,6 +134,7 @@ const writeJSONFile = (filePath, data) => {
 };
 
 const initializeData = () => {
+  ensureJSONFilesDir();
   if (!fs.existsSync(PRODUCTS_FILE)) {
     const defaultProducts = [
       {
@@ -254,6 +260,15 @@ const initializeData = () => {
   }
   if (!fs.existsSync(ORDERS_FILE)) {
     writeJSONFile(ORDERS_FILE, []);
+  }
+  if (!fs.existsSync(SUBSCRIPTIONS_FILE)) {
+    writeJSONFile(SUBSCRIPTIONS_FILE, []);
+  }
+  if (!fs.existsSync(CERTIFICATION_INFO_FILE)) {
+    writeJSONFile(CERTIFICATION_INFO_FILE, []);
+  }
+  if (!fs.existsSync(PROMOTIONS_FILE)) {
+    writeJSONFile(PROMOTIONS_FILE, []);
   }
 };
 
@@ -516,6 +531,160 @@ app.get('/api/products/search/:query', (req, res) => {
   }
 });
 
+// PROMOTIONS ENDPOINTS
+app.get('/api/promotions', (req, res) => {
+  try {
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+    const activePromotions = promotions.filter((p) => p.isActive !== false);
+    res.json(activePromotions);
+  } catch (error) {
+    console.error('Get promotions error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/promotions/:id', (req, res) => {
+  try {
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+    const promotion = promotions.find((p) => p.id === parseInt(req.params.id));
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+    res.json(promotion);
+  } catch (error) {
+    console.error('Get promotion error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/promotions', authenticateToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const {
+      name,
+      price,
+      description,
+      categorie,
+      discountPercent,
+      image,
+    } = req.body;
+
+    const imageUrl = image || 'https://via.placeholder.com/400x400?text=Promotion';
+
+    if (!name || !price || !description || !categorie || discountPercent === undefined) {
+      return res.status(400).json({
+        error: 'Name, price, description, category, and discountPercent are required',
+      });
+    }
+
+    const discount = parseInt(discountPercent);
+    if (isNaN(discount) || discount < 1 || discount > 100) {
+      return res.status(400).json({ error: 'discountPercent must be between 1 and 100' });
+    }
+
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+
+    const newPromotion = {
+      id: Date.now(),
+      name,
+      price: parseFloat(price),
+      description,
+      categorie,
+      discountPercent: discount,
+      discountedPrice: parseFloat(price) * (1 - discount / 100),
+      image: imageUrl,
+      datePublication: new Date().toISOString(),
+      isActive: true,
+    };
+
+    promotions.push(newPromotion);
+    writeJSONFile(PROMOTIONS_FILE, promotions);
+
+    res.status(201).json({ message: 'Promotion created successfully', promotion: newPromotion });
+  } catch (error) {
+    console.error('Create promotion error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/promotions/:id', authenticateToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+    const promotionIndex = promotions.findIndex((p) => p.id === parseInt(req.params.id));
+    if (promotionIndex === -1) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    const promotion = promotions[promotionIndex];
+
+    const {
+      name,
+      price,
+      image,
+      description,
+      categorie,
+      discountPercent,
+      isActive,
+    } = req.body;
+
+    const updateData = {
+      ...promotion,
+      name: name || promotion.name,
+      price: price ? parseFloat(price) : promotion.price,
+      image: image || promotion.image,
+      description: description || promotion.description,
+      categorie: categorie || promotion.categorie,
+      isActive: isActive !== undefined ? isActive : promotion.isActive,
+    };
+
+    if (discountPercent !== undefined) {
+      const discount = parseInt(discountPercent);
+      if (isNaN(discount) || discount < 1 || discount > 100) {
+        return res.status(400).json({ error: 'discountPercent must be between 1 and 100' });
+      }
+      updateData.discountPercent = discount;
+      updateData.discountedPrice = updateData.price * (1 - discount / 100);
+    }
+
+    promotions[promotionIndex] = updateData;
+    writeJSONFile(PROMOTIONS_FILE, promotions);
+
+    res.json({ message: 'Promotion updated successfully', promotion: updateData });
+  } catch (error) {
+    console.error('Update promotion error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/promotions/:id', authenticateToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+    const promotionIndex = promotions.findIndex((p) => p.id === parseInt(req.params.id));
+    if (promotionIndex === -1) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    promotions.splice(promotionIndex, 1);
+    writeJSONFile(PROMOTIONS_FILE, promotions);
+
+    res.json({ message: 'Promotion deleted successfully' });
+  } catch (error) {
+    console.error('Delete promotion error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.post('/api/products', authenticateToken, (req, res) => {
   try {
     const {
@@ -528,9 +697,12 @@ app.post('/api/products', authenticateToken, (req, res) => {
       paymentMethod,
       paymentAccount,
       image,
+      images,
+      videoUrl,
     } = req.body;
 
     const imageUrl = image || 'https://via.placeholder.com/400x400?text=Product';
+    const imagesList = Array.isArray(images) ? images : [];
 
     if (!name || !price || !description || !categorie) {
       return res.status(400).json({
@@ -551,6 +723,7 @@ app.post('/api/products', authenticateToken, (req, res) => {
       name,
       price: parseFloat(price),
       image: imageUrl,
+      images: imagesList,
       description,
       categorie,
       vendeur: req.user.id,
@@ -559,6 +732,7 @@ app.post('/api/products', authenticateToken, (req, res) => {
       vendeurLocalisation: vendeurLocalisation || user.address,
       datePublication: new Date().toISOString(),
       isActive: true,
+      videoUrl: videoUrl || null,
     };
 
     products.push(newProduct);
@@ -589,6 +763,7 @@ app.put('/api/products/:id', authenticateToken, (req, res) => {
       name,
       price,
       image,
+      images,
       description,
       categorie,
       vendeurCompte,
@@ -596,11 +771,14 @@ app.put('/api/products/:id', authenticateToken, (req, res) => {
       isActive,
     } = req.body;
 
+    const imagesList = Array.isArray(images) ? images : (product.images || []);
+
     products[productIndex] = {
       ...product,
       name: name || product.name,
       price: price ? parseFloat(price) : product.price,
       image: image || product.image,
+      images: imagesList,
       description: description || product.description,
       categorie: categorie || product.categorie,
       vendeurCompte: vendeurCompte !== undefined ? vendeurCompte : product.vendeurCompte,
@@ -744,21 +922,42 @@ app.post('/api/orders', authenticateToken, (req, res) => {
     }
 
     const products = readJSONFile(PRODUCTS_FILE);
+    const promotions = readJSONFile(PROMOTIONS_FILE);
+    const users = readJSONFile(USERS_FILE);
+
+    // Find an admin user to use as seller for promotions (admin-created)
+    const adminUser = users.find((u) => u.role === 'admin');
 
     const validatedItems = items.map((item) => {
-      const product = products.find((p) => p.id === item.id);
+      // First try to find in products
+      let product = products.find((p) => p.id === item.id);
+      let isPromotion = false;
+
+      // If not found in products, try promotions
+      if (!product) {
+        product = promotions.find((p) => p.id === item.id);
+        isPromotion = true;
+      }
+
       if (!product || !product.isActive) {
         throw new Error(`Product ID ${item.id} not found or inactive`);
       }
 
+      // For promotions, use discountedPrice; for products, use price
+      const itemPrice = isPromotion ? product.discountedPrice : product.price;
+
+      // For promotions, use admin as seller; for products, use product's vendeur
+      const seller = isPromotion ? (adminUser?.id || product.vendeur) : product.vendeur;
+
       return {
         ...item,
-        seller: product.vendeur,
+        price: itemPrice,
+        seller,
         name: product.name,
         image: product.image,
         categorie: product.categorie,
-        vendeurNom: product.vendeurNom,
-        vendeurCompte: product.vendeurCompte,
+        vendeurNom: isPromotion ? 'Djassa CI' : product.vendeurNom,
+        vendeurCompte: isPromotion ? '' : product.vendeurCompte,
       };
     });
 
@@ -924,6 +1123,37 @@ app.put('/api/orders/:id/status', authenticateToken, (req, res) => {
   }
 });
 
+app.put('/api/orders/:id/delivery-info', authenticateToken, (req, res) => {
+  try {
+    const orders = readJSONFile(ORDERS_FILE);
+    const orderIndex = orders.findIndex((o) => o.id === parseInt(req.params.id));
+    if (orderIndex === -1) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orders[orderIndex];
+
+    if (order.utilisateurId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
+
+    const { nomLivraison, telLivraison, villeCommune, quartier, buyerLat, buyerLng } = req.body;
+
+    if (nomLivraison !== undefined && nomLivraison !== '') order.nomLivraison = nomLivraison;
+    if (telLivraison !== undefined && telLivraison !== '') order.telLivraison = telLivraison;
+    if (villeCommune !== undefined && villeCommune !== '') order.villeCommune = villeCommune;
+    if (quartier !== undefined && quartier !== '') order.quartier = quartier;
+    if (buyerLat !== undefined && buyerLat !== null && buyerLat !== '') order.buyerLat = parseFloat(buyerLat);
+    if (buyerLng !== undefined && buyerLng !== null && buyerLng !== '') order.buyerLng = parseFloat(buyerLng);
+
+    writeJSONFile(ORDERS_FILE, orders);
+    res.json({ message: 'Infos livraison mises à jour', order });
+  } catch (error) {
+    console.error('Update delivery info error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // CHAT ROUTES
 app.use('/api/messages', authenticateToken, chatRoutes);
 
@@ -1084,6 +1314,185 @@ app.post('/api/users/refresh-seller-verified', authenticateToken, (req, res) => 
   }
 });
 
+app.get('/api/users/:userId/follow', authenticateToken, (req, res) => {
+  try {
+    const users = readJSONFile(USERS_FILE);
+    const targetId = String(req.params.userId);
+    const targetUser = users.find((user) => String(user.id) === targetId);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const subscriptions = readJSONFile(SUBSCRIPTIONS_FILE);
+    const isFollowing = subscriptions.some(
+      (subscription) =>
+        String(subscription.followerId) === String(req.user.id) &&
+        String(subscription.followingId) === targetId
+    );
+    const followersCount = subscriptions.filter(
+      (subscription) => String(subscription.followingId) === targetId
+    ).length;
+
+    res.json({ isFollowing, followersCount });
+  } catch (error) {
+    console.error('Get follow status error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/users/:userId/follow', authenticateToken, (req, res) => {
+  try {
+    const users = readJSONFile(USERS_FILE);
+    const targetId = String(req.params.userId);
+    const followerId = String(req.user.id);
+    if (followerId === targetId) {
+      return res.status(400).json({ error: 'Vous ne pouvez pas vous abonner à vous-même' });
+    }
+
+    const targetUser = users.find((user) => String(user.id) === targetId);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const subscriptions = readJSONFile(SUBSCRIPTIONS_FILE);
+    const existingSubscription = subscriptions.find(
+      (subscription) =>
+        String(subscription.followerId) === followerId &&
+        String(subscription.followingId) === targetId
+    );
+    if (!existingSubscription) {
+      subscriptions.push({
+        id: Date.now(),
+        followerId: req.user.id,
+        followingId: targetUser.id,
+        createdAt: new Date().toISOString(),
+      });
+      writeJSONFile(SUBSCRIPTIONS_FILE, subscriptions);
+    }
+
+    const followersCount = subscriptions.filter(
+      (subscription) => String(subscription.followingId) === targetId
+    ).length;
+    res.status(existingSubscription ? 200 : 201).json({
+      subscribed: true,
+      isFollowing: true,
+      followersCount,
+    });
+  } catch (error) {
+    console.error('Follow user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/users/:userId/follow', authenticateToken, (req, res) => {
+  try {
+    const users = readJSONFile(USERS_FILE);
+    const targetId = String(req.params.userId);
+    const followerId = String(req.user.id);
+    if (followerId === targetId) {
+      return res.status(400).json({ error: 'Vous ne pouvez pas vous désabonner de vous-même' });
+    }
+
+    const targetUser = users.find((user) => String(user.id) === targetId);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const subscriptions = readJSONFile(SUBSCRIPTIONS_FILE);
+    const filteredSubscriptions = subscriptions.filter(
+      (subscription) =>
+        !(
+          String(subscription.followerId) === followerId &&
+          String(subscription.followingId) === targetId
+        )
+    );
+    writeJSONFile(SUBSCRIPTIONS_FILE, filteredSubscriptions);
+
+    const followersCount = filteredSubscriptions.filter(
+      (subscription) => String(subscription.followingId) === targetId
+    ).length;
+    res.json({ subscribed: false, isFollowing: false, followersCount });
+  } catch (error) {
+    console.error('Unfollow user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/users/:userId/followers', authenticateToken, (req, res) => {
+  try {
+    const targetId = String(req.params.userId);
+    const subscriptions = readJSONFile(SUBSCRIPTIONS_FILE);
+    const followerIds = subscriptions
+      .filter((s) => String(s.followingId) === targetId)
+      .map((s) => String(s.followerId));
+    const users = readJSONFile(USERS_FILE).filter((u) => followerIds.includes(String(u.id)));
+    res.json(
+      users.map((u) => ({
+        id: u.id,
+        nom: u.nom,
+        prenom: u.prenom,
+        numero: u.numero,
+        address: u.address,
+        sellerVerified: u.sellerVerified,
+      }))
+    );
+  } catch (error) {
+    console.error('Get followers error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/users/:userId/following', authenticateToken, (req, res) => {
+  try {
+    const targetId = String(req.params.userId);
+    const subscriptions = readJSONFile(SUBSCRIPTIONS_FILE);
+    const followingIds = subscriptions
+      .filter((s) => String(s.followerId) === targetId)
+      .map((s) => String(s.followingId));
+    const users = readJSONFile(USERS_FILE).filter((u) => followingIds.includes(String(u.id)));
+    res.json(
+      users.map((u) => ({
+        id: u.id,
+        nom: u.nom,
+        prenom: u.prenom,
+        numero: u.numero,
+        address: u.address,
+        sellerVerified: u.sellerVerified,
+      }))
+    );
+  } catch (error) {
+    console.error('Get following error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/users/:userId', (req, res) => {
+  try {
+    const users = readJSONFile(USERS_FILE);
+    const targetId = String(req.params.userId);
+    const user = users.find((u) => String(u.id) === targetId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const publicUser = {
+      id: user.id,
+      nom: user.nom,
+      prenom: user.prenom,
+      avatarUrl: user.avatarUrl || null,
+      sellerVerified: user.sellerVerified || false,
+      sellerVerifiedAt: user.sellerVerifiedAt || null,
+      sellerVerifiedUntil: user.sellerVerifiedUntil || null,
+    };
+
+    res.json(publicUser);
+  } catch (error) {
+    console.error('Get public user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.get('/api/users/profile', authenticateToken, (req, res) => {
   try {
     const users = readJSONFile(USERS_FILE);
@@ -1127,6 +1536,26 @@ app.put('/api/users/profile', authenticateToken, (req, res) => {
   }
 });
 
+app.put('/api/users/profile/avatar', authenticateToken, (req, res) => {
+  try {
+    const { avatarUrl } = req.body;
+    const users = readJSONFile(USERS_FILE);
+    const userIndex = users.findIndex((u) => u.id === req.user.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    users[userIndex].avatarUrl = avatarUrl;
+    writeJSONFile(USERS_FILE, users);
+
+    const { password: _, ...userWithoutPassword } = users[userIndex];
+    res.json({ message: 'Avatar updated successfully', user: userWithoutPassword });
+  } catch (error) {
+    console.error('Update avatar error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.put('/api/users/fcm-token', authenticateToken, (req, res) => {
   try {
     const { fcmToken } = req.body;
@@ -1158,6 +1587,54 @@ app.get('/api/users', authenticateToken, (req, res) => {
     res.json(usersWithoutPassword);
   } catch (error) {
     console.error('Get users error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/admin/certification-info', authenticateToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { boutiqueNom, rectoCiUrl, versoCiUrl, lieu, photoVendeurUrl, telephone } = req.body;
+
+    if (!boutiqueNom || !rectoCiUrl || !versoCiUrl || !lieu || !photoVendeurUrl || !telephone) {
+      return res.status(400).json({ error: 'Tous les champs sont obligatoires' });
+    }
+
+    const newInfo = {
+      id: Date.now(),
+      boutiqueNom,
+      rectoCiUrl,
+      versoCiUrl,
+      lieu,
+      photoVendeurUrl,
+      telephone,
+      createdAt: new Date().toISOString(),
+    };
+
+    const data = readJSONFile(CERTIFICATION_INFO_FILE);
+    data.push(newInfo);
+    writeJSONFile(CERTIFICATION_INFO_FILE, data);
+
+    res.status(201).json({ success: true, data: newInfo });
+  } catch (error) {
+    console.error('Save certification info error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/admin/certification-info', authenticateToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const data = readJSONFile(CERTIFICATION_INFO_FILE);
+    res.json(data);
+  } catch (error) {
+    console.error('Get certification info error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

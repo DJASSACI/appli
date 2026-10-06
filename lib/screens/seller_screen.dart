@@ -158,6 +158,39 @@ class _SellerScreenState extends State<SellerScreen> {
     }
   }
 
+  void _showFullScreenAvatar(BuildContext context) {
+    final avatarUrl = _sellerAvatarUrl;
+    if (avatarUrl == null || avatarUrl.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(
+                  avatarUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) =>
+                      const Icon(Icons.broken_image, color: Colors.white70, size: 64),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFollowHeader(BuildContext context) {
     final currentUser = Provider.of<AuthProvider>(context, listen: true).user;
     final isOwnSeller =
@@ -189,20 +222,25 @@ class _SellerScreenState extends State<SellerScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                  backgroundImage: (_sellerAvatarUrl != null && _sellerAvatarUrl!.isNotEmpty)
-                      ? NetworkImage(_sellerAvatarUrl!)
+              : GestureDetector(
+                  onTap: (_sellerAvatarUrl != null && _sellerAvatarUrl!.isNotEmpty)
+                      ? () => _showFullScreenAvatar(context)
                       : null,
-                  child: (_sellerAvatarUrl == null || _sellerAvatarUrl!.isEmpty)
-                      ? Text(
-                          widget.sellerName.isNotEmpty
-                              ? widget.sellerName[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        )
-                      : null,
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundImage: (_sellerAvatarUrl != null && _sellerAvatarUrl!.isNotEmpty)
+                        ? NetworkImage(_sellerAvatarUrl!)
+                        : null,
+                    child: (_sellerAvatarUrl == null || _sellerAvatarUrl!.isEmpty)
+                        ? Text(
+                            widget.sellerName.isNotEmpty
+                                ? widget.sellerName[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          )
+                        : null,
+                  ),
                 ),
           const SizedBox(width: 10),
           // Nom + badge certifié
