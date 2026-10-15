@@ -13,6 +13,10 @@ const String endpointAuthRegister = '/api/auth/register';
 const String endpointAuthLogin = '/api/auth/login';
 const String endpointAuthMe = '/api/auth/me';
 const String endpointAuthRefresh = '/api/auth/refresh';
+const String endpointForgotPasswordRequest = '/api/auth/forgot-password/request';
+const String endpointForgotPasswordApprove = '/api/auth/forgot-password/approve';
+const String endpointForgotPasswordReset = '/api/auth/forgot-password/reset';
+const String endpointChangePassword = '/api/auth/change-password';
 const String endpointProducts = '/api/products';
 const String endpointProductsId = '/api/products/';
 const String endpointProductsCategory = '/api/products/category/';
@@ -35,6 +39,13 @@ const cardColor = Colors.white;
 
 /// Currency
 const String currencySymbol = 'FCFA';
+
+/// Numéro WhatsApp professionnel DJASSACI (format international, sans +, sans espaces, sans tirets).
+/// Configurable via variable de build Flutter : --dart-define=WHATSAPP_BUSINESS_NUMBER=2250715926401
+const String whatsappBusinessNumber = String.fromEnvironment(
+  'WHATSAPP_BUSINESS_NUMBER',
+  defaultValue: '2250715926401',
+);
 
 /// Categories (from backend defaults)
 const List<String> categories = [

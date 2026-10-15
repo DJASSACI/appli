@@ -159,6 +159,52 @@ Future<void> logout() async {
     return await _getToken();
   }
 
+  Future<Map<String, dynamic>> forgotPasswordRequest({
+    required String numero,
+  }) async {
+    final response = await apiService.post(endpointForgotPasswordRequest, data: {
+      'numero': numero,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> forgotPasswordApprove({
+    required String numero,
+    required String tempPassword,
+  }) async {
+    final response = await apiService.post(endpointForgotPasswordApprove, data: {
+      'numero': numero,
+      'tempPassword': tempPassword,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String tempPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await apiService.post(endpointForgotPasswordReset, data: {
+      'tempPassword': tempPassword,
+      'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await apiService.post(endpointChangePassword, data: {
+      'oldPassword': oldPassword,
+      'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<String?> _getToken() async {
     return await storage.read(key: 'token');
   }

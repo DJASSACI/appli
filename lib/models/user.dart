@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class User {
   final int id;
   final String nom;
@@ -13,6 +11,7 @@ class User {
   final String? sellerVerifiedAt;
   final String? sellerVerifiedUntil;
   final String? avatarUrl;
+  final bool? mustChangePassword;
 
   const User({
     required this.id,
@@ -27,6 +26,7 @@ class User {
     this.sellerVerifiedAt,
     this.sellerVerifiedUntil,
     this.avatarUrl,
+    this.mustChangePassword,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -43,6 +43,7 @@ class User {
       sellerVerifiedAt: (json['sellerVerifiedAt'] ?? json['seller_verified_at']),
       sellerVerifiedUntil: (json['sellerVerifiedUntil'] ?? json['seller_verified_until']),
       avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
+      mustChangePassword: json['mustChangePassword'] == true,
     );
   }
 
@@ -56,5 +57,6 @@ class User {
     'dateInscription': dateInscription,
     if (fcmToken != null) 'fcmToken': fcmToken,
     if (avatarUrl != null) 'avatarUrl': avatarUrl,
+    if (mustChangePassword != null) 'mustChangePassword': mustChangePassword,
   };
 }

@@ -6,6 +6,9 @@ import '../screens/splash_screen.dart';
 import '../utils/route_history.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
+import '../screens/forgot_password_screen.dart';
+import '../screens/reset_password_screen.dart';
+import '../screens/change_password_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/product_detail_screen.dart';
@@ -61,6 +64,19 @@ final GoRouter router = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) => const ResetPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/change-password',
+      builder: (context, state) => const ChangePasswordScreen(),
+    ),
+
     GoRoute(
       path: '/home',
       builder: (context, state) {
@@ -230,6 +246,9 @@ GoRoute(
       '/splash',
       '/login',
       '/register',
+      '/forgot-password',
+      '/reset-password',
+      '/change-password',
       '/privacy-policy',
       '/home',
       '/profile',
