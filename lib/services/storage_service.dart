@@ -63,6 +63,16 @@ class StorageService {
     return p.getInt(key);
   }
 
+  Future<void> setStringList(String key, List<String> value) async {
+    final p = await prefs;
+    await p.setStringList(key, value);
+  }
+
+  Future<List<String>?> getStringList(String key) async {
+    final p = await prefs;
+    return p.getStringList(key);
+  }
+
   // etc for other types
 }
 

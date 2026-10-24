@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
 import '../providers/auth_provider.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
@@ -51,11 +52,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         );
       }
+    } on DioException catch (e) {
+      if (!mounted) return;
+      String errorMessage;
+      if (e.response != null) {
+        final backendMessage = e.response?.data?['error'];
+        if (backendMessage is String && backendMessage.isNotEmpty) {
+          errorMessage = backendMessage;
+        } else {
+          errorMessage = 'Impossible de traiter votre demande pour le moment. Vérifiez votre connexion Internet et réessayez.';
+        }
+      } else {
+        errorMessage = 'Impossible de traiter votre demande pour le moment. Vérifiez votre connexion Internet et réessayez.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur : ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text('Impossible de traiter votre demande pour le moment. Vérifiez votre connexion Internet et réessayez.'),
           backgroundColor: Colors.red,
         ),
       );

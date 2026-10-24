@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/promotions_provider.dart';
 import '../models/promotion.dart';
 import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
 import '../screens/product_detail_screen.dart';
 import '../utils/theme.dart';
 
@@ -22,8 +23,11 @@ class _PromotionScreenState extends State<PromotionScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<PromotionsProvider>(context, listen: false).fetchPromotions();
+      // Marquer les notifications de promotions comme lues à l'ouverture de la page
+      // sans réinitialiser aveuglément tout le compteur
+      await NotificationService().markAllPromoRead();
     });
   }
 

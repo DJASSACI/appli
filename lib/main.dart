@@ -7,6 +7,8 @@ import 'utils/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/mawa_service.dart';
+import 'services/notification_service.dart';
 import 'providers/products_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
@@ -19,6 +21,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'providers/chat_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/local_notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Initialize auth session from local storage before app starts
@@ -103,6 +106,9 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
 
+  // Injecte l'instance déjà initialisée dans le service de notification locale.
+  LocalNotificationService().setPlugin(flutterLocalNotificationsPlugin);
+
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   await messaging.requestPermission(
@@ -140,6 +146,8 @@ void main() async {
     if (initialMessage.data['type'] != null) print('Type: ${initialMessage.data['type']}');
     if (initialMessage.data['orderId'] != null) print('OrderId: ${initialMessage.data['orderId']}');
     if (initialMessage.data['sellerId'] != null) print('SellerId: ${initialMessage.data['sellerId']}');
+    // Traiter la notification pour mettre à jour le compteur
+    await NotificationService.processFirebaseMessage(initialMessage);
   }
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print('Got a message whilst in the foreground!');
@@ -147,6 +155,9 @@ void main() async {
     if (message.notification != null) {
       print('Message also contained a notification: ${message.notification}');
     }
+
+    // Traiter la notification pour mettre à jour le compteur
+    await NotificationService.processFirebaseMessage(message);
 
     // Show local notification when app is in foreground
     final String title = message.notification?.title ?? 'Nouvelle notification';
@@ -170,8 +181,20 @@ void main() async {
     );
   });
 
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+    print('Notification ouverte');
+    print('Data: ${message.data}');
+    if (message.data['type'] != null) print('Type: ${message.data['type']}');
+    if (message.data['orderId'] != null) print('OrderId: ${message.data['orderId']}');
+    if (message.data['sellerId'] != null) print('SellerId: ${message.data['sellerId']}');
+    // Traiter la notification pour mettre à jour le compteur
+    await NotificationService.processFirebaseMessage(message);
+  });
+
   // Restore session BEFORE running app
   final sessionData = await initializeSession();
+  await MawaService.initUnreadNotifier();
+  await NotificationService.initNotifiers();
   
   runApp(MyApp(initialSession: sessionData));
 }

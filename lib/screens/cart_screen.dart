@@ -192,9 +192,38 @@ class _CartScreenState extends State<CartScreen> {
               await showDialog<void>(
                 context: context,
                 builder: (dialogContext) => AlertDialog(
-                  title: const Text('Vider le panier ?'),
-                  content: const Text(
-                    'Voulez-vous vraiment supprimer tous les articles de votre panier ? Cette action est irréversible.',
+                  title: const Text(
+                    'Vider le panier ?',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Suppression de tous les articles',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text.rich(
+                        TextSpan(
+                          text: 'Voulez-vous vraiment supprimer tous les articles de votre panier ? ',
+                          style: const TextStyle(fontSize: 14),
+                          children: [
+                            TextSpan(
+                              text: 'Cette action est irréversible.',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   actions: [
                     TextButton(

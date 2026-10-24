@@ -4,6 +4,9 @@ import '../providers/products_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/mawa_service.dart';
+import '../services/notification_service.dart';
 import '../models/product.dart';
 import '../utils/constants.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,6 +17,8 @@ import '../widgets/certification_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  static bool _welcomeShown = false;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -72,11 +77,19 @@ class _HomeScreenState extends State<HomeScreen> {
     'Autre': Icons.category,
   };
 
+  bool _welcomeShown = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
+
+      if (!HomeScreen._welcomeShown) {
+        HomeScreen._welcomeShown = true;
+        await LocalNotificationService().showWelcomeNotification();
+      }
     });
   }
 
@@ -127,8 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Services':
         context.go('/services');
         break;
-      case 'Profil':
-        context.go('/profile');
+      case 'MAWA':
+        context.go('/mawa');
         break;
       case 'Promotions':
         context.go('/promotions');
@@ -280,12 +293,101 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildWelcomeBanner(horizontalPadding),
           _buildSearchBar(horizontalPadding),
           _buildCertificationBanner(),
           _buildShortcutsGrid(horizontalPadding),
           _buildProductsSection(horizontalPadding),
         ],
       ),
+    );
+  }
+
+  Widget _buildWelcomeBanner(double horizontalPadding) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final user = authProvider.user;
+        final prenom = (user?.prenom ?? '').trim();
+        final nom = (user?.nom ?? '').trim();
+        final fullName = ('$prenom $nom').trim();
+        final displayName = fullName.isNotEmpty ? fullName : 'utilisateur';
+
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                  color: _turquoise,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '👋',
+                  style: TextStyle(fontSize: 22),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bienvenue sur DJASSACI',
+                      style: TextStyle(
+                        color: _white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      displayName,
+                      style: TextStyle(
+                        color: _turquoise,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Heureux de vous retrouver !',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -326,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildShortcutsGrid(double horizontalPadding) {
+Widget _buildShortcutsGrid(double horizontalPadding) {
     final items = [
       _ShortcutData(Icons.home_repair_service, 'Services'),
       _ShortcutData(Icons.storefront, 'Boutiques'),
@@ -335,29 +437,46 @@ class _HomeScreenState extends State<HomeScreen> {
       _ShortcutData(Icons.category, 'Catégories'),
       _ShortcutData(Icons.local_offer, 'Promotions'),
       _ShortcutData(Icons.inventory_2, 'Mes produits'),
-      _ShortcutData(Icons.person, 'Profil'),
+      _ShortcutData(Icons.smart_toy, 'MAWA'),
     ];
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: _shortcutsCrossAxisCount(context),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final bgColor = _pastelColors[index % _pastelColors.length];
-          return _ShortcutCard(
-            icon: item.icon,
-            label: item.label,
-            backgroundColor: bgColor,
-            onTap: () => _handleShortcutTap(item.label),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+      child: ValueListenableBuilder<int>(
+        valueListenable: NotificationService.orderUnreadNotifier,
+        builder: (context, orderCount, child) {
+          return ValueListenableBuilder<int>(
+            valueListenable: NotificationService.promoUnreadNotifier,
+            builder: (context, promoCount, child) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _shortcutsCrossAxisCount(context),
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final bgColor = _pastelColors[index % _pastelColors.length];
+                  int badgeCount = 0;
+                  if (item.label == 'Commandes') {
+                    badgeCount = orderCount;
+                  } else if (item.label == 'Promotions') {
+                    badgeCount = promoCount;
+                  }
+                  return _ShortcutCard(
+                    icon: item.icon,
+                    label: item.label,
+                    backgroundColor: bgColor,
+                    onTap: () => _handleShortcutTap(item.label),
+                    badgeCount: badgeCount,
+                  );
+                },
+              );
+            },
           );
         },
       ),
@@ -529,12 +648,14 @@ class _ShortcutCard extends StatelessWidget {
   final String label;
   final Color backgroundColor;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _ShortcutCard({
     required this.icon,
     required this.label,
     required this.backgroundColor,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -559,30 +680,71 @@ class _ShortcutCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade200, width: 1),
+children: [
+                badgeCount > 0
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.topRight,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade200, width: 1),
+                            ),
+                            child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
+                          ),
+                          Positioned(
+                            right: -2,
+                            top: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Text(
+                                badgeCount > 99 ? '99+' : badgeCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey.shade200, width: 1),
+                        ),
+                        child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
+                      ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0F172A),
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
@@ -75,9 +76,24 @@ class AuthProvider with ChangeNotifier {
       _user = User.fromJson(data['user']);
       return true;
     } catch (e) {
-      final msg = e.toString();
-      if (msg.contains('already exists') || msg.contains('phone number')) {
-        _error = 'Ce numéro est déjà utilisé.';
+      String msg;
+      if (e is DioException) {
+        if (e.response != null) {
+          final backendMessage = e.response?.data?['error'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            msg = backendMessage;
+          } else {
+            msg = 'Impossible de contacter le serveur. Vérifiez votre connexion Internet et réessayez.';
+          }
+        } else {
+          msg = 'Impossible de contacter le serveur. Vérifiez votre connexion Internet et réessayez.';
+        }
+      } else {
+        msg = e.toString();
+      }
+
+      if (msg.contains('déjà associé') || msg.contains('déjà utilisé') || msg.contains('already exists') || msg.contains('phone number')) {
+        _error = 'Ce numéro de téléphone est déjà associé à un compte DJASSACI. Connectez-vous à votre compte ou utilisez un autre numéro.';
       } else {
         _error = msg;
       }

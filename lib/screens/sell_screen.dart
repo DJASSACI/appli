@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -118,13 +119,26 @@ Future<void> _createProduct() async {
 
         final productName = _nameController.text.replaceAll(RegExp(r'[^\w\s-]'), '');
 
-        final imageUrls = await CloudinaryStorageService()
-            .uploadProductImages(_imageFiles, productName);
+        // Upload des images avec gestion d'erreur spécifique
+        List<String> imageUrls;
+        try {
+          imageUrls = await CloudinaryStorageService()
+              .uploadProductImages(_imageFiles, productName);
+        } catch (_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Échec du téléchargement des images. Vérifiez votre connexion Internet et réessayez.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isUploading = false);
+          return;
+        }
 
         if (!mounted) return;
         setState(() {
           _imageUrls = imageUrls;
-          _isUploading = false;
         });
 
         debugPrint('📤 [SELL_SCREEN] Using Cloudinary URLs: $imageUrls');
@@ -144,7 +158,6 @@ Future<void> _createProduct() async {
           'images': imageUrls,
         });
 
-
         if (response.statusCode == 201) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -153,13 +166,59 @@ Future<void> _createProduct() async {
             await Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
             context.go('/home');
           }
+        } else {
+          if (!mounted) return;
+          final backendMessage = response.data?['error'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(backendMessage), backgroundColor: Colors.red),
+            );
+          } else if ((response.statusCode ?? 0) >= 500) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Le serveur est temporairement indisponible. Veuillez réessayer dans quelques instants.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Une erreur inattendue est survenue lors de la publication de votre produit. Réessayez. Si le problème persiste, contactez le support DJASSACI.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
+      } on DioException catch (e) {
+        if (!mounted) return;
+        setState(() => _isUploading = false);
+
+        String errorMessage;
+        if (e.response != null) {
+          final backendMessage = e.response?.data?['error'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            errorMessage = backendMessage;
+          } else if (e.response!.statusCode! >= 500) {
+            errorMessage = 'Le serveur est temporairement indisponible. Veuillez réessayer dans quelques instants.';
+          } else {
+            errorMessage = 'Une erreur inattendue est survenue lors de la publication de votre produit. Réessayez. Si le problème persiste, contactez le support DJASSACI.';
+          }
+        } else {
+          errorMessage = 'Impossible de publier votre produit pour le moment. Vérifiez votre connexion Internet et réessayez.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-          );
-        }
+        if (!mounted) return;
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Une erreur inattendue est survenue lors de la publication de votre produit. Réessayez. Si le problème persiste, contactez le support DJASSACI.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() => _isUploading = false);

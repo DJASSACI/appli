@@ -85,6 +85,15 @@ _dio = Dio(BaseOptions(
     }
   }
 
+  Future<String> sendMawaMessage(String message, {String? requestId}) async {
+    final response = await _dio.post('/api/mawa/chat', data: {'message': message, if (requestId != null) 'requestId': requestId});
+    return response.data['reply'] as String;
+  }
+
+  Future<void> registerMawaNotificationRequest(String requestId) async {
+    await _dio.post('/api/mawa/notification-request', data: {'requestId': requestId});
+  }
+
 static Future<Response> createOrder(Map<String, dynamic> data) async {
     data['notify_url'] = "https://djassa-backend-imxo.onrender.com/api/payment/geniuspay/webhook";
     data['transactionId'] = DateTime.now().millisecondsSinceEpoch.toString();

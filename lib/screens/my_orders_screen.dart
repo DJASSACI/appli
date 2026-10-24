@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/orders_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../models/order.dart';
 import '../models/product.dart';
@@ -25,6 +26,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.loadCurrentUser();
       Provider.of<OrdersProvider>(context, listen: false).fetchMyOrders();
+      // Marquer les notifications de commandes comme lues à l'ouverture de la page
+      await NotificationService().markAllOrderRead();
     });
   }
 

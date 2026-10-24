@@ -471,6 +471,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: Text(user.address),
                 ),
               ),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.lock_outline, color: Colors.orange),
+                  title: const Text('Modifier le mot de passe'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.go('/change-password'),
+                ),
+              ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () => context.go('/home'),
@@ -505,8 +513,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: const Text(
                         'Demande de suppression de mon compte',
                       ),
-                      content: const Text(
-                        'Vous allez être redirigé vers WhatsApp pour envoyer votre demande de suppression. Vos informations seront examinées afin de traiter votre demande.',
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Demande de suppression de compte',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text.rich(
+                            TextSpan(
+                              text: 'Vous serez redirigé vers WhatsApp pour envoyer votre demande de suppression. ',
+                              style: const TextStyle(fontSize: 14),
+                              children: [
+                                TextSpan(
+                                  text: 'Vos informations seront examinées afin de traiter votre demande.',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       actions: [
                         TextButton(
