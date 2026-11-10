@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -117,15 +118,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _numeroController.text,
                                   _passwordController.text,
                                 );
-                                if (success) {
-                                  if (context.mounted) {
-                                    if (authProvider.user?.mustChangePassword == true) {
-                                      context.go('/reset-password');
-                                    } else {
-                                      context.go('/home');
+                                    if (success) {
+                                      if (context.mounted) {
+                                        // P1 : mustChangePassword prioritaire ; on supprime explicitement
+                                        // l'intention de notification (évite intention orpheline / navigation
+                                        // non désirée) et on respecte la redirection existante.
+                                        if (authProvider.user?.mustChangePassword == true) {
+                                          NotificationService.clearPendingRoute();
+                                          context.go('/reset-password');
+                                        } else if (NotificationService.pendingRoute != null) {
+                                          NotificationService.consumePendingRouteIfAuthenticated();
+                                        } else {
+                                          context.go('/home');
+                                        }
+                                      }
                                     }
-                                  }
-                                }
                               }
                             },
                       child: authProvider.isLoading

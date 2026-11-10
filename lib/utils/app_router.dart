@@ -41,12 +41,24 @@ import '../screens/admin_promotion_form_screen.dart';
 import '../screens/admin_orders_screen.dart';
 import '../screens/admin_delivered_orders_screen.dart';
 import '../screens/admin_users_screen.dart';
+import '../screens/admin_products_screen.dart';
+import '../screens/admin_audit_log_screen.dart';
+import '../screens/admin_team_purchases_screen.dart';
+import '../screens/admin_savings_plans_screen.dart';
+import '../screens/my_team_purchases_screen.dart';
+import '../screens/my_savings_plans_screen.dart';
 import '../screens/promotion_screen.dart';
 import '../screens/promotion_detail_screen.dart';
+import '../screens/promotion_savings_screen.dart';
+import '../screens/team_purchase_screen.dart';
+import '../screens/team_hub_screen.dart';
+import '../screens/team_chat_screen.dart';
 import '../screens/services_screen.dart';
 import '../screens/mawa_chat_screen.dart';
 import '../models/product.dart';
 import '../models/promotion.dart';
+import '../models/promotion_savings.dart';
+import '../models/team_purchase.dart';
 
 // Router configuration
 
@@ -183,6 +195,30 @@ GoRoute(
       builder: (context, state) => const AdminUsersScreen(),
     ),
     GoRoute(
+      path: '/admin/products',
+      builder: (context, state) => const AdminProductsScreen(),
+    ),
+    GoRoute(
+      path: '/admin/audit-log',
+      builder: (context, state) => const AdminAuditLogScreen(),
+    ),
+    GoRoute(
+      path: '/admin/team-purchases',
+      builder: (context, state) => const AdminTeamPurchasesScreen(),
+    ),
+    GoRoute(
+      path: '/admin/savings-plans',
+      builder: (context, state) => const AdminSavingsPlansScreen(),
+    ),
+    GoRoute(
+      path: '/my-team-purchases',
+      builder: (context, state) => const MyTeamPurchasesScreen(),
+    ),
+    GoRoute(
+      path: '/my-savings-plans',
+      builder: (context, state) => const MySavingsPlansScreen(),
+    ),
+    GoRoute(
       path: '/promotions',
       builder: (context, state) => const PromotionScreen(),
     ),
@@ -199,6 +235,65 @@ GoRoute(
       builder: (context, state) {
         final promotion = state.extra as Promotion;
         return PromotionDetailScreen(promotion: promotion);
+      },
+    ),
+    GoRoute(
+      path: '/team-hub',
+      builder: (context, state) {
+        final extra = state.extra;
+        final promotion = extra is Promotion ? extra : null;
+        if (promotion == null) {
+          return const Scaffold(
+            body: Center(child: Text('Promotion introuvable pour l\'achat en équipe.')),
+          );
+        }
+        return TeamHubScreen(promotion: promotion);
+      },
+    ),
+    GoRoute(
+      path: '/savings/:planId',
+      builder: (context, state) {
+        final rawId = state.pathParameters['planId'];
+        final planId = int.tryParse(rawId ?? '');
+        if (planId == null || planId <= 0) {
+          return const Scaffold(
+            body: Center(child: Text('Identifiant d\'objectif invalide.')),
+          );
+        }
+        final extra = state.extra;
+        final initialPlan = extra is PromotionSavingsPlan ? extra : null;
+        return PromotionSavingsScreen(planId: planId, initialPlan: initialPlan);
+      },
+    ),
+    GoRoute(
+      path: '/team/:id',
+      builder: (context, state) {
+        final rawId = state.pathParameters['id'];
+        final teamId = int.tryParse(rawId ?? '');
+        if (teamId == null || teamId <= 0) {
+          return const Scaffold(
+            body: Center(child: Text('Identifiant d\'équipe invalide.')),
+          );
+        }
+        final extra = state.extra;
+        final initialTeam = extra is TeamPurchase ? extra : null;
+        return TeamPurchaseScreen(teamId: teamId, initialTeam: initialTeam);
+      },
+    ),
+    GoRoute(
+      path: '/team/:id/chat',
+      builder: (context, state) {
+        final rawId = state.pathParameters['id'];
+        final teamId = int.tryParse(rawId ?? '');
+        if (teamId == null || teamId <= 0) {
+          return const Scaffold(
+            body: Center(child: Text('Identifiant d\'équipe invalide.')),
+          );
+        }
+        final extra = state.extra is Map ? Map<String, dynamic>.from(state.extra as Map) : const <String, dynamic>{};
+        final title = extra['teamTitle']?.toString();
+        final readOnly = extra['readOnly'] == true;
+        return TeamChatScreen(teamId: teamId, teamTitle: title, readOnlyHint: readOnly);
       },
     ),
     GoRoute(

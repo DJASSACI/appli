@@ -52,6 +52,10 @@ _dio = Dio(BaseOptions(
     _token = token;
   }
 
+  /// Indique si un JWT est présent (utilisé pour gating FCM, sans exposer le token).
+  bool hasToken() => _token != null && _token!.isNotEmpty;
+  static bool instanceHasToken() => instance.hasToken();
+
   Future<Response> get(String endpoint, {Map<String, dynamic>? queryParameters}) async {
     try {
       return await _dio.get(endpoint, queryParameters: queryParameters);
@@ -129,7 +133,7 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
     return '';
   }
 
-Future<Response> saveCertificationInfo({
+  Future<Response> saveCertificationInfo({
     required String boutiqueNom,
     required String rectoCiUrl,
     required String versoCiUrl,
@@ -152,5 +156,95 @@ Future<Response> saveCertificationInfo({
     } catch (e) {
       rethrow;
     }
+  }
+
+  // ===== Team purchase (achat en equipe) =====
+  // Backend derives creatorId/participantId from JWT; do not send them.
+
+  Future<Response> createTeam(int promotionId) async {
+    return await _dio.post(
+      '/api/teams',
+      data: {
+        'promotionId': promotionId,
+      },
+    );
+  }
+
+  Future<Response> getTeam(dynamic teamId) async {
+    return await _dio.get('/api/teams/$teamId');
+  }
+
+  Future<Response> getTeamStatus(dynamic teamId) async {
+    return await _dio.get('/api/teams/$teamId/status');
+  }
+
+  Future<Response> joinTeam(dynamic teamId) async {
+    return await _dio.post('/api/teams/$teamId/join');
+  }
+
+  Future<Response> joinTeamByCode(String invitationCode) async {
+    return await _dio.post(
+      '/api/teams/join-by-code',
+      data: {'invitationCode': invitationCode},
+    );
+  }
+
+  Future<Response> initTeamContribution(dynamic teamId, num amount) async {
+    return await _dio.post(
+      '/api/teams/$teamId/contributions/init',
+      data: {
+        'amount': amount,
+      },
+    );
+  }
+
+  // ===== Team chat (F6-C, additive) — JWT ajouté par l'intercepteur Dio =====
+  // Ne jamais envoyer senderId/userId ; identité dérivée du JWT côté serveur.
+
+  Future<Response> getTeamMessages(dynamic teamId) async {
+    return await _dio.get('/api/teams/$teamId/messages');
+  }
+
+  Future<Response> sendTeamMessage(dynamic teamId, String message) async {
+    return await _dio.post(
+      '/api/teams/$teamId/messages',
+      data: {'message': message},
+    );
+  }
+
+  // ===== "Acheter petit a petit" (promotion savings, additif) =====
+  // JWT ajoute par l'intercepteur Dio. Ne jamais envoyer userId; cible/montants viennent du backend.
+
+  Future<Response> createPromotionSavingsPlan(int promotionId) async {
+    return await _dio.post('/api/promotions/$promotionId/savings');
+  }
+
+  Future<Response> getPromotionSavingsPlan(dynamic planId) async {
+    return await _dio.get('/api/savings/$planId');
+  }
+
+  Future<Response> initSavingsContribution(dynamic planId, num amount) async {
+    return await _dio.post(
+      '/api/savings/$planId/contributions/init',
+      data: {'amount': amount},
+    );
+  }
+
+  // ===== Admin (lecture seule) =====
+  Future<Response> getAdminTeamPurchases() async {
+    return await _dio.get('/api/admin/teams');
+  }
+
+  Future<Response> getAdminSavingsPlans() async {
+    return await _dio.get('/api/admin/savings');
+  }
+
+  // ===== Utilisateur connecté (lecture seule, filtré par req.user.id backend) =====
+  Future<Response> getMyTeamPurchases() async {
+    return await _dio.get('/api/my/teams');
+  }
+
+  Future<Response> getMySavingsPlans() async {
+    return await _dio.get('/api/my/savings');
   }
 }

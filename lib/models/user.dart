@@ -12,6 +12,7 @@ class User {
   final String? sellerVerifiedUntil;
   final String? avatarUrl;
   final bool? mustChangePassword;
+  final bool? suspended;
 
   const User({
     required this.id,
@@ -27,6 +28,7 @@ class User {
     this.sellerVerifiedUntil,
     this.avatarUrl,
     this.mustChangePassword,
+    this.suspended,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class User {
       sellerVerifiedUntil: (json['sellerVerifiedUntil'] ?? json['seller_verified_until']),
       avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
       mustChangePassword: json['mustChangePassword'] == true,
+      suspended: json['suspended'] == true,
     );
   }
 

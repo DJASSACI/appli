@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'utils/theme.dart';
 import 'utils/app_router.dart';
 import 'providers/auth_provider.dart';
@@ -13,7 +12,6 @@ import 'providers/products_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/promotions_provider.dart';
-import 'screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -97,7 +95,7 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Create notification channel for Android
+  // Create notification channel for Android (conservé)
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'djassaci_channel',
     'Djassaci Notifications',
@@ -106,8 +104,14 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
 
-  // Injecte l'instance déjà initialisée dans le service de notification locale.
+  // Injecte l'instance + callbacks de clic (payload -> routage centralisé)
   LocalNotificationService().setPlugin(flutterLocalNotificationsPlugin);
+  await LocalNotificationService().initWithTap((data) {
+    // État auth connu après runApp via token/session restaurée (ApiService) : on vérifie le JWT présent.
+    final hasJwt = ApiService.instanceHasToken();
+    NotificationService.handleNotificationTap(data, isAuthenticated: hasJwt);
+  });
+  await LocalNotificationService().handleAppLaunchFromLocalNotification();
 
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -121,45 +125,41 @@ void main() async {
   String? token = await FirebaseMessaging.instance.getToken();
 
   if (token == null || token.isEmpty) {
-    print("❌ TOKEN FCM INVALID");
+    print("FCM token unavailable");
   } else {
-    print("✅ TOKEN OK: $token");
     await FirebaseMessaging.instance.subscribeToTopic('djassaci_all');
   }
 
 
-  // Save token to backend
+  // Background handler (conservé)
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('Notification ouverte');
-    print('Data: ${message.data}');
-    if (message.data['type'] != null) print('Type: ${message.data['type']}');
-    if (message.data['orderId'] != null) print('OrderId: ${message.data['orderId']}');
-    if (message.data['sellerId'] != null) print('SellerId: ${message.data['sellerId']}');
+
+  // Tap FCM (app background -> ouverte) : listener unique, centralisé
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+    await NotificationService.processFirebaseMessage(message);
+    final hasJwt = ApiService.instanceHasToken();
+    NotificationService.handleNotificationTap(
+      Map<String, dynamic>.from(message.data),
+      isAuthenticated: hasJwt,
+    );
   });
 
-  // Handle notification when app is opened from terminated state
+  // App ouverte depuis état terminé via notification système FCM
   final RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) {
-    print('App opened from terminated state via notification');
-    print('Data: ${initialMessage.data}');
-    if (initialMessage.data['type'] != null) print('Type: ${initialMessage.data['type']}');
-    if (initialMessage.data['orderId'] != null) print('OrderId: ${initialMessage.data['orderId']}');
-    if (initialMessage.data['sellerId'] != null) print('SellerId: ${initialMessage.data['sellerId']}');
-    // Traiter la notification pour mettre à jour le compteur
     await NotificationService.processFirebaseMessage(initialMessage);
+    final hasJwt = ApiService.instanceHasToken();
+    NotificationService.handleNotificationTap(
+      Map<String, dynamic>.from(initialMessage.data),
+      isAuthenticated: hasJwt,
+    );
   }
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    print('Got a message whilst in the foreground!');
-    print('Message data: ${message.data}');
-    if (message.notification != null) {
-      print('Message also contained a notification: ${message.notification}');
-    }
 
-    // Traiter la notification pour mettre à jour le compteur
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    // Met à jour compteurs/badges (types existants + team/savings, additif)
     await NotificationService.processFirebaseMessage(message);
 
-    // Show local notification when app is in foreground
+    // Affichage local en premier plan (conservé, canal existant)
     final String title = message.notification?.title ?? 'Nouvelle notification';
     final String body = message.notification?.body ?? '';
     
@@ -181,20 +181,22 @@ void main() async {
     );
   });
 
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
-    print('Notification ouverte');
-    print('Data: ${message.data}');
-    if (message.data['type'] != null) print('Type: ${message.data['type']}');
-    if (message.data['orderId'] != null) print('OrderId: ${message.data['orderId']}');
-    if (message.data['sellerId'] != null) print('SellerId: ${message.data['sellerId']}');
-    // Traiter la notification pour mettre à jour le compteur
-    await NotificationService.processFirebaseMessage(message);
+  // Renouvellement token FCM -> sync backend si authentifié (non bloquant)
+  FirebaseMessaging.instance.onTokenRefresh.listen((_) {
+    // ignore: unawaited_futures
+    NotificationService.syncFcmTokenIfAuthenticated();
   });
 
   // Restore session BEFORE running app
   final sessionData = await initializeSession();
   await MawaService.initUnreadNotifier();
   await NotificationService.initNotifiers();
+
+  // Sync token FCM si session restaurée (JWT déjà injecté)
+  if (sessionData != null && sessionData['token'] != null) {
+    // ignore: unawaited_futures
+    NotificationService.syncFcmTokenIfAuthenticated();
+  }
   
   runApp(MyApp(initialSession: sessionData));
 }

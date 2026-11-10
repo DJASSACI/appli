@@ -301,15 +301,55 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     color: Colors.indigo,
                                   ),
                                 ),
+GestureDetector(
+                                   onTap: () => context.push('/admin/delivered-orders'),
+                                   child: _StatCard(
+                                     title: 'Tous les colis livrés',
+                                     subtitle:
+                                         'Voir la liste des colis livrés',
+                                     value: '',
+                                     icon: Icons.local_shipping,
+                                     color: Colors.teal,
+                                   ),
+                                 ),
                                 GestureDetector(
-                                  onTap: () => context.push('/admin/delivered-orders'),
+                                  onTap: () => context.push('/admin/products'),
                                   child: _StatCard(
-                                    title: 'Tous les colis livrés',
-                                    subtitle:
-                                        'Voir la liste des colis livrés',
+                                    title: 'Produits',
+                                    subtitle: 'Consulter le catalogue',
                                     value: '',
-                                    icon: Icons.local_shipping,
+                                    icon: Icons.inventory_2,
+                                    color: Colors.blueGrey,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/team-purchases'),
+                                  child: _StatCard(
+                                    title: "Tous les achats en équipe",
+                                    subtitle: 'Voir équipes, progression et participants',
+                                    value: '',
+                                    icon: Icons.groups,
+                                    color: Colors.indigoAccent,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/savings-plans'),
+                                  child: _StatCard(
+                                    title: "Tous les achats petit à petit",
+                                    subtitle: 'Voir objectifs, épargne et contributions',
+                                    value: '',
+                                    icon: Icons.savings,
                                     color: Colors.teal,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => context.push('/admin/audit-log'),
+                                  child: _StatCard(
+                                    title: 'Journal d’audit',
+                                    subtitle: 'Consulter l’historique administratif',
+                                    value: '',
+                                    icon: Icons.history,
+                                    color: Colors.grey,
                                   ),
                                 ),
                               ],

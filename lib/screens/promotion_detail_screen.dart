@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion.dart';
+import '../models/promotion_savings.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/back_arrow.dart';
@@ -24,6 +26,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
   double? _buyerLat;
   double? _buyerLng;
   bool _isGettingGps = false;
+  bool _isCreatingSavings = false;
 
   late final PageController _pageController;
   int _currentImageIndex = 0;
@@ -101,6 +104,61 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
 
   String _formatPrice(double price) {
     return '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ')} FCFA';
+  }
+
+  Future<void> _buyPetitAPetit(Promotion promotion) async {
+    if (_isCreatingSavings) return;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated) {
+      if (!mounted) return;
+      context.go('/login');
+      return;
+    }
+    setState(() => _isCreatingSavings = true);
+    try {
+      final response = await ApiService.instance.createPromotionSavingsPlan(promotion.id);
+      final plan = PromotionSavingsPlan.fromApiResponse(response.data);
+      if (plan.planId <= 0) {
+        throw Exception('Réponse du serveur invalide (objectif non créé).');
+      }
+      if (!mounted) return;
+      context.push('/savings/${plan.planId}', extra: plan);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_savingsCreateErrorMessage(e)), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isCreatingSavings = false);
+    }
+  }
+
+  String _savingsCreateErrorMessage(Object error) {
+    if (error is DioException) {
+      final status = error.response?.statusCode;
+      final data = error.response?.data;
+      String? backendMessage;
+      if (data is Map) {
+        final raw = data['error'] ?? data['message'];
+        if (raw is String && raw.trim().isNotEmpty) backendMessage = raw.trim();
+      }
+      if (status == 401 || status == 403) return 'Session expirée ou non autorisée. Veuillez vous reconnecter.';
+      if (status == 404) return 'Promotion introuvable.';
+      if (status == 400) return backendMessage ?? 'Impossible de créer l\'objectif (promotion invalide ou indisponible).';
+      if (status == 500) return backendMessage ?? 'Erreur serveur. Réessayez plus tard.';
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.connectionError) {
+        return 'Erreur réseau. Vérifiez votre connexion Internet et réessayez.';
+      }
+      return backendMessage ?? 'Création de l\'objectif échouée.';
+    }
+    if (error is Exception) {
+      final msg = error.toString().replaceFirst('Exception: ', '').trim();
+      if (msg.isNotEmpty) return msg;
+    }
+    return 'Erreur inattendue lors de la création de l\'objectif.';
   }
 
   Future<void> _getCurrentLocation() async {
@@ -543,6 +601,44 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrange,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/team-hub', extra: promotion),
+                icon: const Icon(Icons.groups),
+                label: const Text(
+                    'Acheter en équipe',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.deepOrange,
+                  side: const BorderSide(color: Colors.deepOrange, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: _isCreatingSavings ? null : () => _buyPetitAPetit(promotion),
+                icon: _isCreatingSavings
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.savings_outlined),
+                label: Text(
+                  _isCreatingSavings ? 'Ouverture...' : 'Acheter petit à petit',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.deepOrange,
+                  side: const BorderSide(color: Colors.deepOrange, width: 1.5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),

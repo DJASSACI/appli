@@ -13,6 +13,7 @@ class AdminOrdersScreen extends StatefulWidget {
 
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   bool _isLoading = true;
+  String _statusFilter = 'tous';
 
   @override
   void initState() {
@@ -49,6 +50,11 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  List<Order> _filteredOrders(List<Order> orders) {
+    if (_statusFilter == 'tous') return orders;
+    return orders.where((o) => o.statut == _statusFilter).toList();
   }
 
   @override
@@ -90,13 +96,33 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   );
                 }
 
-                return RefreshIndicator(
-                  onRefresh: _loadOrders,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: ordersProvider.orders.length,
-                    itemBuilder: (context, index) {
-                      final order = ordersProvider.orders[index];
+return RefreshIndicator(
+                   onRefresh: _loadOrders,
+                   child: Column(
+                     children: [
+                       Padding(
+                         padding: const EdgeInsets.all(12),
+                         child: DropdownButtonFormField<String>(
+                           value: _statusFilter,
+                           decoration: const InputDecoration(
+                             labelText: 'Filtrer par statut',
+                             border: OutlineInputBorder(),
+                           ),
+                           items: const [
+                             DropdownMenuItem(value: 'tous', child: Text('Tous')),
+                             DropdownMenuItem(value: 'payée', child: Text('Payée')),
+                             DropdownMenuItem(value: 'échouée', child: Text('Échouée')),
+                             DropdownMenuItem(value: 'livree', child: Text('Livrée')),
+                           ],
+                           onChanged: (v) => setState(() => _statusFilter = v ?? 'tous'),
+                         ),
+                       ),
+                       Expanded(
+                         child: ListView.builder(
+                           padding: const EdgeInsets.all(16),
+                           itemCount: _filteredOrders(ordersProvider.orders).length,
+                           itemBuilder: (context, index) {
+                             final order = _filteredOrders(ordersProvider.orders)[index];
                       final firstArticle = order.articles.isNotEmpty
                           ? order.articles.first as Map<String, dynamic>
                           : <String, dynamic>{};
@@ -156,11 +182,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                           ],
                         ),
                       );
-                    },
+                      },
+                    ),
                   ),
-                );
-              },
-            ),
-    );
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
   }
-}

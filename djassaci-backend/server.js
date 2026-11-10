@@ -1792,12 +1792,69 @@ app.get('/api/stats', authenticateToken, (req, res) => {
     const products = readJSONFile(PRODUCTS_FILE);
     const orders = readJSONFile(ORDERS_FILE);
 
+    // Comptage des commandes par statut
+    const ordersByStatus = {};
+    orders.forEach((o) => {
+      const s = o.statut || 'inconnu';
+      ordersByStatus[s] = (ordersByStatus[s] || 0) + 1;
+    });
+
+    // Paiements : on utilise le statut de la commande comme indicateur
+    // (le paiement réel est géré par GeniusPay webhook -> statut 'payée'/'échouée')
+    const paidOrders = orders.filter((o) => o.statut === 'payée').length;
+    const failedOrders = orders.filter((o) => o.statut === 'échouée').length;
+    const pendingOrders = orders.filter((o) => o.statut === 'en_attente').length;
+    const deliveredOrders = orders.filter((o) => o.statut === 'livree').length;
+
+    // Revenus : somme des commandes payées (commission DJASSACI = 5% du subtotal)
+    const totalRevenue = orders
+      .filter((o) => o.statut === 'payée' || o.statut === 'livree')
+      .reduce((sum, o) => sum + (o.total || 0), 0);
+
+    // Revenus DJASSACI (commission 5% sur le subtotal des articles)
+    const djassaciRevenue = orders
+      .filter((o) => o.statut === 'payée' || o.statut === 'livree')
+      .reduce((sum, o) => {
+        const subtotal = (o.articles || []).reduce((s, a) => s + ((a.price || 0) * (a.quantite || 1)), 0);
+        return sum + (subtotal * 0.05);
+      }, 0);
+
+    // Vendeurs (utilisateurs avec sellerVerified === true)
+    const sellers = users.filter((u) => u.sellerVerified === true).length;
+
+    // Alertes certifications
+    const nowMs = Date.now();
+    const expiringSoonMs = 7 * 24 * 60 * 60 * 1000; // 7 jours
+    let expiredCerts = 0;
+    let expiringSoonCerts = 0;
+
+    users.forEach((u) => {
+      if (!u.sellerVerifiedUntil) return;
+      const untilDate = new Date(u.sellerVerifiedUntil);
+      if (Number.isNaN(untilDate.getTime())) return;
+      const diffMs = untilDate.getTime() - nowMs;
+      if (diffMs <= 0) {
+        expiredCerts++;
+      } else if (diffMs <= expiringSoonMs) {
+        expiringSoonCerts++;
+      }
+    });
+
     const stats = {
       totalUsers: users.length,
+      totalSellers: sellers,
       totalProducts: products.length,
       activeProducts: products.filter((p) => p.isActive).length,
       totalOrders: orders.length,
-      totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
+      ordersByStatus: ordersByStatus,
+      paidOrders: paidOrders,
+      failedOrders: failedOrders,
+      pendingOrders: pendingOrders,
+      deliveredOrders: deliveredOrders,
+      totalRevenue: totalRevenue,
+      djassaciRevenue: djassaciRevenue,
+      expiredCerts: expiredCerts,
+      expiringSoonCerts: expiringSoonCerts,
     };
 
     res.json(stats);

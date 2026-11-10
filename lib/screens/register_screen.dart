@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -146,11 +147,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   address: _addressController.text,
                                   password: _passwordController.text,
                                 );
-                                if (success) {
-                                  if (mounted) {
-                                    context.go('/home');
+                                  if (success) {
+                                    if (mounted) {
+                                      if (NotificationService.pendingRoute != null) {
+                                        NotificationService.consumePendingRouteIfAuthenticated();
+                                      } else {
+                                        context.go('/home');
+                                      }
+                                    }
                                   }
-                                }
                               }
                             },
                       child: authProvider.isLoading

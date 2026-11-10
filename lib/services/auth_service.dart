@@ -1,10 +1,10 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/user.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import '../utils/constants.dart';
+import 'notification_service.dart';
 
 class AuthService {
   final ApiService apiService;
@@ -12,6 +12,22 @@ class AuthService {
   final StorageService storageService = StorageService();
 
   AuthService(this.apiService);
+
+  /// Synchronisation token FCM (best-effort, JWT requis, sans log du token).
+  /// (P5) Fire-and-forget par défaut : ne retarde pas login/register.
+  Future<void> syncFcmTokenIfAuthenticated({bool awaitResult = false}) async {
+    final f = NotificationService.syncFcmTokenIfAuthenticated();
+    if (awaitResult) {
+      await f;
+    } else {
+      unawaited(f);
+    }
+  }
+
+  /// (P4) Invalide le cache de sync FCM avant resync sur un nouveau compte.
+  Future<void> invalidateFcmTokenSyncCache() async {
+    await NotificationService.invalidateFcmTokenSyncCache();
+  }
 
   Future<Map<String, dynamic>> register({
     required String nom,
@@ -28,13 +44,20 @@ class AuthService {
       'password': password,
     });
 
-if (response.statusCode == 201) {
+    if (response.statusCode == 201) {
       final data = response.data as Map<String, dynamic>;
-      await _saveToken(data['token']);
+      final token = data['token'] as String?;
+      if (token != null) {
+        await _saveToken(token);
+        apiService.setToken(token);
+      }
       // Save user data locally for session persistence
       if (data['user'] != null) {
         await storageService.saveUserData(data['user'] as Map<String, dynamic>);
       }
+      // (P4/P5) Nouveau compte -> invalider cache sync puis resync (non bloquant).
+      await invalidateFcmTokenSyncCache();
+      await syncFcmTokenIfAuthenticated();
       return data;
     }
     final data = response.data;
@@ -70,16 +93,9 @@ if (response.statusCode == 201) {
         await storageService.saveUserData(data['user'] as Map<String, dynamic>);
       }
 
-      // Save FCM token (non-blocking)
-      try {
-        String? token = await FirebaseMessaging.instance.getToken();
-        print("FCM TOKEN = $token");
-        if (token != null) {
-          await apiService.put('/api/users/fcm-token', data: {'fcmToken': token});
-        }
-      } catch (e) {
-        print('FCM token save error (non-blocking): $e');
-      }
+      // (P4/P5) Changement potentiel de compte -> invalider cache puis resync (non bloquant).
+      await invalidateFcmTokenSyncCache();
+      await syncFcmTokenIfAuthenticated();
       
 
       
@@ -128,13 +144,13 @@ if (response.statusCode == 201) {
     throw Exception('Token refresh failed');
   }
 
-Future<void> logout() async {
+  Future<void> logout() async {
     await storage.delete(key: 'token');
     await storageService.clearUserData();
     apiService.setToken('');
   }
 
-/// Get user from local storage without API call (for instant session restore)
+  /// Get user from local storage without API call (for instant session restore)
   /// Also restores the token to ApiService for API calls
   Future<User?> getUserFromLocalStorage() async {
     final userData = await storageService.getUserData();

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   User? _user;
@@ -74,6 +75,7 @@ class AuthProvider with ChangeNotifier {
       );
       authService.apiService.setToken(data['token']);
       _user = User.fromJson(data['user']);
+      NotificationService.consumePendingRouteIfAuthenticated();
       return true;
     } catch (e) {
       String msg;
@@ -113,6 +115,10 @@ class AuthProvider with ChangeNotifier {
     try {
       final localUser = await authService.getUserFromLocalStorage();
       _user = localUser;
+      if (_user != null) {
+        // ignore: unawaited_futures
+        authService.syncFcmTokenIfAuthenticated();
+      }
     } catch (_) {
       _user = null;
     } finally {
@@ -142,6 +148,8 @@ class AuthProvider with ChangeNotifier {
 
       // Persist user data if desired
       await authService.storageService.saveUserData(freshUser.toJson());
+      // ignore: unawaited_futures
+      authService.syncFcmTokenIfAuthenticated();
     } catch (_) {
       // non-blocking
     }
@@ -163,6 +171,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await authService.logout();
+    // (P4) purge cache sync FCM pour éviter association token->mauvais compte au prochain login
+    await NotificationService.invalidateFcmTokenSyncCache();
+    NotificationService.clearPendingRoute();
     _user = null;
     notifyListeners();
   }

@@ -4,7 +4,6 @@ import '../providers/orders_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
-import '../utils/constants.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import 'package:go_router/go_router.dart';
@@ -154,34 +153,67 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   Future<void> _reportProblem(Order order) async {
-    final firstArt = order.articles.isNotEmpty ? order.articles.first as Map : {};
-    Map<String, dynamic> productData;
-    if (firstArt['product'] != null) {
-      productData = Map<String, dynamic>.from(firstArt['product']);
-    } else {
-      productData = Map<String, dynamic>.from(firstArt);
+    // Informations réelles de la commande sélectionnée (aucune valeur inventée).
+    final productNames = <String>[];
+    final vendeurNames = <String>{};
+    for (final art in order.articles) {
+      final map = art is Map ? Map<String, dynamic>.from(art) : <String, dynamic>{};
+      Map<String, dynamic> productData;
+      if (map['product'] is Map) {
+        productData = Map<String, dynamic>.from(map['product'] as Map);
+      } else {
+        productData = Map<String, dynamic>.from(map);
+      }
+      final product = Product.fromJson(productData);
+      if (product.name.trim().isNotEmpty) {
+        productNames.add(product.name.trim());
+      }
+      final vendeurNom = (product.vendeurNom ?? '').trim();
+      if (vendeurNom.isNotEmpty) {
+        vendeurNames.add(vendeurNom);
+      }
     }
-    final product = Product.fromJson(productData);
+    final produit = productNames.isEmpty ? 'Non disponible' : productNames.join(', ');
+    final vendeur = vendeurNames.isEmpty ? 'Non disponible' : vendeurNames.join(', ');
+    final montant = '${order.total.toStringAsFixed(0)} FCFA';
+    final statut = order.statut.trim().isEmpty ? 'Non disponible' : order.statut;
 
-    final message = 'Bonjour, je souhaite signaler un problème sur le colis.\n\n'
-        'Nom du colis : ${product.name}\n'
-        'Prix : ${product.price.toStringAsFixed(0)} FCFA\n'
-        'Description : ${product.description}\n\n'
+    final message = 'Bonjour, je souhaite signaler un problème concernant une commande effectuée sur DJASSACI.\n\n'
+        '- Numéro de commande : ${order.id}\n'
+        '- Produit : $produit\n'
+        '- Vendeur : $vendeur\n'
+        '- Montant : $montant\n'
+        '- Statut : $statut\n\n'
+        'Description du problème :\n'
+        'Je souhaite obtenir de l\'assistance concernant cette commande.\n\n'
         'Merci de m\'aider à résoudre ce problème.';
 
     final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = 'https://wa.me/+2250715926401?text=$encodedMessage';
+    final whatsappUri = Uri.parse(
+      'https://wa.me/2250715926401?text=$encodedMessage',
+    );
 
     try {
-      final uri = Uri.parse(whatsappUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('WhatsApp non disponible'), backgroundColor: Colors.red),
-        );
-      }
+      // Tente WhatsApp (app) ; fallback navigateur/WhatsApp Web si indisponible.
+      final openedExternal = await launchUrl(
+        whatsappUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedExternal) return;
+
+      final openedFallback = await launchUrl(
+        whatsappUri,
+        mode: LaunchMode.platformDefault,
+      );
+      if (openedFallback) return;
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible d\'ouvrir WhatsApp. Veuillez réessayer.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

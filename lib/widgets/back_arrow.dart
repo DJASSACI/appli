@@ -16,16 +16,17 @@ class BackArrow extends StatelessWidget {
       onPressed: () {
         final path = GoRouterState.of(context).uri.toString();
 
-        if (path == '/my-seller-orders') {
+        if (path == '/my-seller-orders' || path.startsWith('/followers') || path.startsWith('/following')) {
           context.go('/profile');
           return;
         }
 
 
-        if (path == '/my-products' ||
-
-            path == '/admin-dashboard' ||
-            path == '/privacy-policy') {
+        if (path == '/my-products') {
+          context.go('/home');
+          return;
+        }
+        if (path == '/admin-dashboard' || path == '/privacy-policy') {
           context.go('/profile');
           return;
         }

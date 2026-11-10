@@ -16,6 +16,7 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
   List<dynamic> _certifications = [];
   bool _isLoading = true;
   String? _errorMessage;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -51,6 +52,15 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
     }
   }
 
+  List<dynamic> get _filteredCertifications {
+    if (_searchQuery.isEmpty) return _certifications;
+    final q = _searchQuery.toLowerCase();
+    return _certifications.where((c) {
+      final m = c as Map<String, dynamic>;
+      return (m['boutiqueNom'] ?? '').toString().toLowerCase().contains(q);
+    }).toList();
+  }
+
   void _showImageFullScreen(String imageUrl) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -73,7 +83,21 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Rechercher par boutique...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v),
+            ),
+          ),
+          Expanded(
+            child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
               ? Center(
@@ -91,7 +115,7 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
                     ],
                   ),
                 )
-              : _certifications.isEmpty
+              : _filteredCertifications.isEmpty
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -109,9 +133,9 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
                       onRefresh: _loadCertifications,
                       child: ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: _certifications.length,
+                        itemCount: _filteredCertifications.length,
                         itemBuilder: (context, index) {
-                          final cert = _certifications[index];
+                          final cert = _filteredCertifications[index];
                           return _CertificationCard(
                             cert: cert,
                             onImageTap: _showImageFullScreen,
@@ -119,6 +143,9 @@ class _CertifiedListScreenState extends State<CertifiedListScreen> {
                         },
                       ),
                     ),
+                  ),
+                ],
+              ),
     );
   }
 }
