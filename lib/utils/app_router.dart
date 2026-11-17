@@ -56,7 +56,6 @@ import '../screens/team_chat_screen.dart';
 import '../screens/services_screen.dart';
 import '../screens/mawa_chat_screen.dart';
 import '../screens/notifications_screen.dart';
-import '../models/product.dart';
 import '../models/promotion.dart';
 import '../models/promotion_savings.dart';
 import '../models/team_purchase.dart';
@@ -103,7 +102,6 @@ final GoRouter router = GoRouter(
 GoRoute(
       path: '/product/:id',
       builder: (context, state) {
-        final product = state.extra as Product?;
         return ProductDetailScreen();
       },
     ),

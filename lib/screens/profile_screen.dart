@@ -20,6 +20,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _orangeSecondary = Color(0xFFFFB15C);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   bool _triedRestoreOnce = false;
   int _followersCount = 0;
   int _followingCount = 0;
@@ -133,8 +141,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-        child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(
+                color: _orangePrimary,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _textDark),
+            ),
+          ],
+        ),
       );
 
   Widget _shortcutCard({
@@ -144,16 +168,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0.5,
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        leading: CircleAvatar(backgroundColor: color.withValues(alpha: 0.12), child: Icon(icon, color: color)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: _orangePrimary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: _orangePrimary),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: _textDark)),
+        subtitle: Text(subtitle, style: const TextStyle(color: _textMuted)),
+        trailing: const Icon(Icons.chevron_right, color: _textMuted),
         onTap: onTap,
       ),
     );
@@ -172,7 +214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!forCurrent || _loadingShortcuts) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
+        child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: _orangePrimary))),
       );
     }
     final cards = <Widget>[];
@@ -202,21 +244,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Widget stat(String label, int value) => Expanded(
           child: InkWell(
             onTap: label == 'Abonnés' ? _openFollowers : _openFollowing,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
+                color: _white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _borderSoft),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   _isLoadingCounts
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text('$value', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 13)),
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _orangePrimary))
+                      : Text('$value', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _orangePrimary)),
+                  const SizedBox(height: 4),
+                  Text(label, style: const TextStyle(color: _textMuted, fontSize: 13, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -259,11 +308,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer la photo de profil'),
-        content: const Text('Voulez-vous vraiment supprimer votre photo de profil ?'),
+        backgroundColor: _white,
+        surfaceTintColor: _white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Supprimer la photo de profil', style: TextStyle(color: _textDark, fontWeight: FontWeight.w700)),
+        content: const Text('Voulez-vous vraiment supprimer votre photo de profil ?', style: TextStyle(color: _textMuted)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(foregroundColor: _textMuted),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -291,17 +350,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final hasAvatar = user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty;
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      backgroundColor: _white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Choisir dans la galerie'), onTap: () { Navigator.of(context).pop(); _pickAndUploadAvatar(ImageSource.gallery); }),
-            ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Prendre une photo'), onTap: () { Navigator.of(context).pop(); _pickAndUploadAvatar(ImageSource.camera); }),
-            if (hasAvatar)
-              ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Supprimer la photo', style: TextStyle(color: Colors.red)), onTap: () { Navigator.of(context).pop(); _deleteAvatar(); }),
-            const SizedBox(height: 8),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(color: _borderSoft, borderRadius: BorderRadius.circular(4)),
+              ),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: _orangePrimary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.photo_library, color: _orangePrimary),
+                ),
+                title: const Text('Choisir dans la galerie', style: TextStyle(color: _textDark, fontWeight: FontWeight.w500)),
+                onTap: () { Navigator.of(context).pop(); _pickAndUploadAvatar(ImageSource.gallery); },
+              ),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: _orangePrimary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.camera_alt, color: _orangePrimary),
+                ),
+                title: const Text('Prendre une photo', style: TextStyle(color: _textDark, fontWeight: FontWeight.w500)),
+                onTap: () { Navigator.of(context).pop(); _pickAndUploadAvatar(ImageSource.camera); },
+              ),
+              if (hasAvatar)
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle),
+                    child: const Icon(Icons.delete, color: Colors.red),
+                  ),
+                  title: const Text('Supprimer la photo', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                  onTap: () { Navigator.of(context).pop(); _deleteAvatar(); },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -313,25 +409,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: _isUploadingAvatar ? null : _showAvatarOptions,
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            backgroundImage: hasAvatar ? NetworkImage(user.avatarUrl!) : null,
-            child: (!hasAvatar || _isUploadingAvatar)
-                ? Center(
-                    child: _isUploadingAvatar
-                        ? const CircularProgressIndicator()
-                        : Text(user.nom.isNotEmpty ? user.nom[0].toUpperCase() : '?', style: const TextStyle(fontSize: 40, color: Colors.white)),
-                  )
-                : null,
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: _borderSoft, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 48,
+              backgroundColor: _orangePrimary.withValues(alpha: 0.12),
+              backgroundImage: hasAvatar ? NetworkImage(user.avatarUrl!) : null,
+              child: (!hasAvatar || _isUploadingAvatar)
+                  ? Center(
+                      child: _isUploadingAvatar
+                          ? const CircularProgressIndicator(color: _orangePrimary)
+                          : Text(
+                              user.nom.isNotEmpty ? user.nom[0].toUpperCase() : '?',
+                              style: const TextStyle(fontSize: 36, color: _orangePrimary, fontWeight: FontWeight.w700),
+                            ),
+                    )
+                  : null,
+            ),
           ),
           Positioned(
             bottom: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
-              child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _orangePrimary,
+                shape: BoxShape.circle,
+                border: Border.all(color: _white, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
             ),
           ),
         ],
@@ -340,15 +456,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _actionTile({required IconData icon, required String title, String? subtitle, VoidCallback? onTap, Color? iconColor, Color? textColor, Widget? trailing}) {
-    return Card(
-      elevation: 0.3,
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _borderSoft),
+      ),
       child: ListTile(
-        leading: Icon(icon, color: iconColor ?? Colors.grey[800]),
-        title: Text(title, style: TextStyle(color: textColor)),
-        subtitle: subtitle != null ? Text(subtitle) : null,
-        trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, size: 20) : null),
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: (iconColor ?? _textMuted).withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor ?? _textDark, size: 20),
+        ),
+        title: Text(title, style: TextStyle(color: textColor ?? _textDark, fontWeight: FontWeight.w500)),
+        subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(color: _textMuted)) : null,
+        trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, size: 20, color: _textMuted) : null),
         onTap: onTap,
       ),
     );
@@ -358,12 +485,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
-        title: const Text('Profil'),
+        title: const Text(
+          'Profil',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: _textDark),
             onPressed: () {
               _resetShortcuts();
               authProvider.logout();
@@ -371,6 +507,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: Builder(
         builder: (context) {
@@ -378,15 +518,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (user == null) {
             _resetShortcuts();
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(authProvider.isLoading ? 'Chargement...' : 'Session indisponible. Rechargez la page.', textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  ElevatedButton(onPressed: () async { await authProvider.loadCurrentUser(); }, child: const Text('Réessayer')),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: _orangePrimary),
+                    const SizedBox(height: 16),
+                    Text(
+                      authProvider.isLoading ? 'Chargement...' : 'Session indisponible. Rechargez la page.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: _textMuted, fontSize: 15),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async { await authProvider.loadCurrentUser(); },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orangePrimary,
+                        foregroundColor: _white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -396,34 +552,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               // En-tête moderne
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  color: _white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _borderSoft),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
                     Center(child: _buildAvatar(user)),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Flexible(
-                          child: Text('${user.prenom} ${user.nom}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                          child: Text(
+                            '${user.prenom} ${user.nom}',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: _textDark),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                         if (user.sellerVerified == true) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
-                            child: const Text('Certifié', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _orangePrimary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _orangePrimary.withValues(alpha: 0.3)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified_rounded, size: 14, color: _orangePrimary),
+                                SizedBox(width: 4),
+                                Text('Certifié', style: TextStyle(color: _orangePrimary, fontSize: 12, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(user.numero, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]), textAlign: TextAlign.center),
+                    const SizedBox(height: 6),
+                    Text(
+                      user.numero,
+                      style: const TextStyle(color: _textMuted, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
@@ -439,20 +621,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildMyActivities(user),
 
               _sectionTitle('Mon compte'),
-              _actionTile(icon: Icons.phone_outlined, title: 'Téléphone', subtitle: user.numero),
-              _actionTile(icon: Icons.location_on_outlined, title: 'Adresse', subtitle: user.address),
-              _actionTile(icon: Icons.lock_outline, iconColor: Colors.orange, title: 'Modifier le mot de passe', onTap: () => context.go('/change-password')),
+              _actionTile(icon: Icons.phone_outlined, iconColor: _orangePrimary, title: 'Téléphone', subtitle: user.numero),
+              _actionTile(icon: Icons.location_on_outlined, iconColor: _orangePrimary, title: 'Adresse', subtitle: user.address),
+              _actionTile(icon: Icons.lock_outline, iconColor: _orangePrimary, title: 'Modifier le mot de passe', onTap: () => context.go('/change-password')),
 
               _sectionTitle('Raccourcis'),
-              Card(
-                elevation: 0.3,
+              Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+                decoration: BoxDecoration(
+                  color: _white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _borderSoft),
+                ),
                 child: Column(
                   children: [
-                    ListTile(leading: const Icon(Icons.home_outlined), title: const Text('Accueil'), trailing: const Icon(Icons.chevron_right, size: 20), onTap: () => context.go('/home')),
-                    const Divider(height: 1),
-                    ListTile(leading: const Icon(Icons.inventory_2_outlined), title: const Text('Mes produits'), trailing: const Icon(Icons.chevron_right, size: 20), onTap: () => context.go('/my-products')),
+                    ListTile(
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(color: _orangePrimary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                        child: const Icon(Icons.home_outlined, color: _orangePrimary, size: 20),
+                      ),
+                      title: const Text('Accueil', style: TextStyle(color: _textDark, fontWeight: FontWeight.w500)),
+                      trailing: const Icon(Icons.chevron_right, size: 20, color: _textMuted),
+                      onTap: () => context.go('/home'),
+                    ),
+                    const Divider(height: 1, color: _borderSoft, indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(color: _orangePrimary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                        child: const Icon(Icons.inventory_2_outlined, color: _orangePrimary, size: 20),
+                      ),
+                      title: const Text('Mes produits', style: TextStyle(color: _textDark, fontWeight: FontWeight.w500)),
+                      trailing: const Icon(Icons.chevron_right, size: 20, color: _textMuted),
+                      onTap: () => context.go('/my-products'),
+                    ),
                   ],
                 ),
               ),
@@ -463,24 +668,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await showDialog<void>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
-                      title: const Text('Demande de suppression de mon compte'),
+                      backgroundColor: _white,
+                      surfaceTintColor: _white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      title: const Text(
+                        'Demande de suppression de mon compte',
+                        style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+                      ),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Demande de suppression de compte', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          const Text(
+                            'Demande de suppression de compte',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textDark),
+                          ),
                           const SizedBox(height: 12),
                           Text.rich(TextSpan(
                             text: 'Vous serez redirigé vers WhatsApp pour envoyer votre demande de suppression. ',
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 14, color: _textMuted),
                             children: [
-                              TextSpan(text: 'Vos informations seront examinées afin de traiter votre demande.', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              TextSpan(text: 'Vos informations seront examinées afin de traiter votre demande.', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _textDark)),
                             ],
                           )),
                         ],
                       ),
                       actions: [
-                        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Annuler')),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: TextButton.styleFrom(foregroundColor: _textMuted),
+                          child: const Text('Annuler'),
+                        ),
                         TextButton(
                           onPressed: () async {
                             Navigator.of(dialogContext).pop();
@@ -491,6 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             final url = Uri.parse('whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}');
                             await launchUrl(url);
                           },
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
                           child: const Text('Continuer'),
                         ),
                       ],
@@ -499,26 +718,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
                 icon: const Icon(Icons.delete_forever),
                 label: const Text('Demander la suppression de mon compte'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: _white,
+                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: () => context.go('/certification-info-form'),
                 icon: const Icon(Icons.verified_user),
                 label: const Text('Devenir boutique certifiée'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _orangePrimary,
+                  foregroundColor: _white,
+                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
               if (user.role == 'admin') ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () => context.go('/admin-dashboard'),
                   icon: const Icon(Icons.dashboard),
                   label: const Text('Dashboard'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _textDark,
+                    foregroundColor: _white,
+                    elevation: 0,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
                 ),
               ],
-              const SizedBox(height: 8),
-              _actionTile(icon: Icons.lock, iconColor: Colors.orange, title: 'Politique de confidentialité', onTap: () => context.go('/privacy-policy')),
-              _actionTile(icon: Icons.support_agent, iconColor: Colors.orange, title: 'Support / Contact', subtitle: '0715926401', trailing: const Icon(Icons.phone), onTap: () => launchUrl(Uri.parse('tel:0715926401'))),
+              const SizedBox(height: 10),
+              _actionTile(icon: Icons.lock, iconColor: _orangePrimary, title: 'Politique de confidentialité', onTap: () => context.go('/privacy-policy')),
+              _actionTile(icon: Icons.support_agent, iconColor: _orangePrimary, title: 'Support / Contact', subtitle: '0715926401', trailing: const Icon(Icons.phone, color: _orangePrimary), onTap: () => launchUrl(Uri.parse('tel:0715926401'))),
             ],
           );
         },

@@ -22,6 +22,14 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _orangeSecondary = Color(0xFFFFB15C);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   String? _paymentMethod;
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
@@ -179,12 +187,22 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
-        title: const Text('Panier'),
+        title: const Text(
+          'Panier',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline_rounded, color: _orangePrimary),
+            tooltip: 'Vider le panier',
             onPressed: () async {
               final cartProvider =
                   Provider.of<CartProvider>(context, listen: false);
@@ -192,9 +210,12 @@ class _CartScreenState extends State<CartScreen> {
               await showDialog<void>(
                 context: context,
                 builder: (dialogContext) => AlertDialog(
+                  backgroundColor: _white,
+                  surfaceTintColor: _white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   title: const Text(
                     'Vider le panier ?',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: _textDark),
                   ),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -203,21 +224,23 @@ class _CartScreenState extends State<CartScreen> {
                       const Text(
                         'Suppression de tous les articles',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           fontSize: 16,
+                          color: _textDark,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text.rich(
                         TextSpan(
                           text: 'Voulez-vous vraiment supprimer tous les articles de votre panier ? ',
-                          style: const TextStyle(fontSize: 14),
-                          children: [
+                          style: const TextStyle(fontSize: 14, color: _textMuted, height: 1.4),
+                          children: const [
                             TextSpan(
                               text: 'Cette action est irréversible.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
+                                color: _textDark,
                               ),
                             ),
                           ],
@@ -234,6 +257,7 @@ class _CartScreenState extends State<CartScreen> {
                           horizontal: 24,
                           vertical: 16,
                         ),
+                        foregroundColor: _textMuted,
                         textStyle: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -253,7 +277,7 @@ class _CartScreenState extends State<CartScreen> {
                           vertical: 8,
                         ),
                         foregroundColor: Colors.red,
-                        textStyle: const TextStyle(fontSize: 14),
+                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       child: const Text('vider'),
                     ),
@@ -263,21 +287,41 @@ class _CartScreenState extends State<CartScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.home),
+            icon: const Icon(Icons.home_rounded, color: _textDark),
             onPressed: () => GoRouter.of(context).go('/home'),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
           if (cartProvider.itemCount == 0) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Votre panier est vide', style: TextStyle(fontSize: 18)),
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: _orangePrimary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.shopping_cart_outlined, size: 40, color: _orangePrimary.withValues(alpha: 0.7)),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Votre panier est vide',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _textDark),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Ajoutez des produits pour commencer',
+                    style: TextStyle(fontSize: 14, color: _textMuted),
+                  ),
                 ],
               ),
             );
@@ -287,53 +331,155 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               Expanded(
                 child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   itemCount: cartProvider.items.length,
                   itemBuilder: (context, index) {
                     final item = cartProvider.items[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(item.product.image),
-                          onBackgroundImageError: (_,__) => const Icon(Icons.image_not_supported),
-                          radius: 30,
-                        ),
-                        title: Text(item.product.name),
-                        subtitle: Text('${item.product.categorie} • ${item.product.vendeurLocalisation ?? 'N/A'}'),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove),
-                                  onPressed: () => cartProvider.updateQuantity(item.product.id, item.quantity - 1),
-                                ),
-                                Text('${item.quantity}'),
-                                IconButton(
-                                  icon: const Icon(Icons.add),
-                                  onPressed: () => cartProvider.updateQuantity(item.product.id, item.quantity + 1),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () => showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: _white,
+                              surfaceTintColor: _white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              title: Text(
+                                item.product.name,
+                                style: const TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+                              ),
+                              content: Text(
+                                item.product.description,
+                                style: const TextStyle(color: _textMuted, height: 1.4),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: TextButton.styleFrom(foregroundColor: _orangePrimary),
+                                  child: const Text('Fermer'),
                                 ),
                               ],
                             ),
-                            Text(
-                              '${(item.quantity * item.product.price).toStringAsFixed(0)} $currencySymbol',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              color: _white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: _borderSoft),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        onTap: () => showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(item.product.name),
-                            content: Text(item.product.description),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Fermer'),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Image.network(
+                                      item.product.image,
+                                      width: 84,
+                                      height: 84,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        width: 84,
+                                        height: 84,
+                                        color: _offWhite,
+                                        child: Icon(Icons.image_not_supported_outlined, color: _textMuted.withValues(alpha: 0.7)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.product.name,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: _textDark,
+                                            height: 1.2,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${item.product.categorie} • ${item.product.vendeurLocalisation ?? 'N/A'}',
+                                          style: const TextStyle(fontSize: 12, color: _textMuted),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: _offWhite,
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(color: _borderSoft),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.remove_rounded, size: 18),
+                                                    color: _textDark,
+                                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                                    padding: EdgeInsets.zero,
+                                                    visualDensity: VisualDensity.compact,
+                                                    onPressed: () => cartProvider.updateQuantity(item.product.id, item.quantity - 1),
+                                                  ),
+                                                  Container(
+                                                    constraints: const BoxConstraints(minWidth: 28),
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      '${item.quantity}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: _textDark,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.add_rounded, size: 18),
+                                                    color: _orangePrimary,
+                                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                                    padding: EdgeInsets.zero,
+                                                    visualDensity: VisualDensity.compact,
+                                                    onPressed: () => cartProvider.updateQuantity(item.product.id, item.quantity + 1),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              '${(item.quantity * item.product.price).toStringAsFixed(0)} $currencySymbol',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 15,
+                                                color: _orangePrimary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -342,28 +488,33 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _borderSoft),
                     boxShadow: [
-                      BoxShadow(color: Colors.black12, blurRadius: 8, offset: const Offset(0, -2)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
                     ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Total',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: _textDark),
+                      ),
                       Text(
                         '${cartProvider.totalAmount.toStringAsFixed(0)} $currencySymbol',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _orangePrimary),
                       ),
                     ],
                   ),
                 ),
               ),
-                      const SizedBox(height: 16),
+              const SizedBox(height: 16),
               // Commander sur WhatsApp
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -398,8 +549,14 @@ class _CartScreenState extends State<CartScreen> {
                       launchUrl(url);
                     },
                     icon: const Icon(Icons.message_outlined),
-                    label: const Text('Commander sur WhatsApp'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    label: const Text('Commander sur WhatsApp', style: TextStyle(fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
                   ),
                 ),
               ),

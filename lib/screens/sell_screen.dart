@@ -34,6 +34,13 @@ class _SellScreenState extends State<SellScreen> {
   final _vendeurCompteController = TextEditingController();
   final _paymentAccountController = TextEditingController();
 
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   final List<String> _categories = [
     'Téléphones',
     'Ordinateurs',
@@ -227,19 +234,117 @@ Future<void> _createProduct() async {
     }
   }
 
+  InputDecoration _inputDecoration({
+    required String labelText,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(color: _textMuted),
+      prefixIcon: Icon(icon, color: _orangePrimary),
+      filled: true,
+      fillColor: _white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _borderSoft),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _borderSoft),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _orangePrimary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _orangePrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: _orangePrimary, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _textDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
-        title: const Text('Vendre un produit'),
+        title: const Text(
+          'Vendre un produit',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.home),
+            icon: const Icon(Icons.home_rounded, color: _textDark),
             onPressed: () => context.go('/home'),
           ),
           IconButton(
-            icon: const Icon(Icons.inventory_2),
+            icon: const Icon(Icons.inventory_2_outlined, color: _textDark),
             tooltip: 'Mes produits',
             onPressed: () => context.go('/my-products'),
           ),
@@ -251,314 +356,362 @@ Future<void> _createProduct() async {
           ),
           */
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Section images
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Photos du produit (${_imageFiles.length})',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildSectionCard(
+                title: 'Photos',
+                icon: Icons.photo_library_outlined,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Photos du produit (${_imageFiles.length})',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _textDark,
                         ),
-                        if (_imageFiles.isNotEmpty)
-                          TextButton.icon(
-                            onPressed: _isUploading ? null : _pickImages,
-                            icon: const Icon(Icons.add_a_photo),
-                            label: const Text('Ajouter'),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_imageFiles.isEmpty)
-                      GestureDetector(
-                        onTap: _pickImages,
-                        child: Container(
-                          height: 180,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey, width: 2, style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.grey.shade50,
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text("Appuyez pour sélectionner des photos", style: TextStyle(color: Colors.grey)),
-                              SizedBox(height: 4),
-                              Text("Sélection multiple autorisée", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                            ],
+                      ),
+                      if (_imageFiles.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: _isUploading ? null : _pickImages,
+                          icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                          label: const Text('Ajouter'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: _orangePrimary,
+                            textStyle: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
-                      )
-                    else
-                      Column(
-                        children: [
-                          // Image principale (grande)
-                          GestureDetector(
-                            onTap: _pickImages,
-                            child: Container(
-                              height: 200,
-                              width: double.infinity,
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_imageFiles.isEmpty)
+                    GestureDetector(
+                      onTap: _pickImages,
+                      child: Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: _borderSoft, width: 1.5),
+                          borderRadius: BorderRadius.circular(16),
+                          color: _offWhite,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(12),
+                                color: _orangePrimary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
                               ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  _imageUrls.isNotEmpty
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.network(
-                                            _imageUrls.first,
-                                            fit: BoxFit.cover,
-                                            loadingBuilder: (context, child, loadingProgress) {
-                                              if (loadingProgress == null) return child;
-                                              return Container(
-                                                color: Colors.grey[300],
-                                                child: const Center(child: CircularProgressIndicator()),
-                                              );
-                                            },
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return ClipRRect(
-                                                borderRadius: BorderRadius.circular(12),
-                                                child: Image.file(_imageFiles.first, fit: BoxFit.cover),
-                                              );
-                                            },
-                                          ),
-                                        )
-                                      : ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(_imageFiles.first, fit: BoxFit.cover),
+                              child: const Icon(Icons.add_a_photo_outlined, size: 28, color: _orangePrimary),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              "Appuyez pour sélectionner des photos",
+                              style: TextStyle(color: _textDark, fontWeight: FontWeight.w500),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              "Sélection multiple autorisée",
+                              style: TextStyle(color: _textMuted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickImages,
+                          child: Container(
+                            height: 210,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: _borderSoft),
+                              borderRadius: BorderRadius.circular(16),
+                              color: _offWhite,
+                            ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                _imageUrls.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Image.network(
+                                          _imageUrls.first,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              color: _offWhite,
+                                              child: const Center(
+                                                child: CircularProgressIndicator(color: _orangePrimary),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return ClipRRect(
+                                              borderRadius: BorderRadius.circular(16),
+                                              child: Image.file(_imageFiles.first, fit: BoxFit.cover),
+                                            );
+                                          },
                                         ),
-                                  if (_isUploading)
-                                    Positioned(
-                                      bottom: 8,
-                                      right: 8,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black54,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SizedBox(
-                                              width: 12,
-                                              height: 12,
-                                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text('Upload...', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                          ],
-                                        ),
+                                      )
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Image.file(_imageFiles.first, fit: BoxFit.cover),
                                       ),
-                                    ),
+                                if (_isUploading)
                                   Positioned(
-                                    top: 8,
-                                    left: 8,
+                                    bottom: 10,
+                                    right: 10,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: Colors.black54,
-                                        borderRadius: BorderRadius.circular(12),
+                                        color: _textDark.withValues(alpha: 0.75),
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: const Text('Principale', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Upload...',
+                                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                Positioned(
+                                  top: 10,
+                                  left: 10,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: _orangePrimary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'Principale',
+                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          // Miniatures
-                          if (_imageFiles.length > 1)
-                            SizedBox(
-                              height: 80,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _imageFiles.length,
-                                itemBuilder: (context, index) {
-                                  final isMain = index == 0;
-                                  return Container(
-                                    width: 70,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    child: Stack(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            // Déplacer l'image sélectionnée en première position (principale)
-                                            setState(() {
-                                              final file = _imageFiles.removeAt(index);
-                                              _imageFiles.insert(0, file);
-                                              if (index < _imageUrls.length) {
-                                                final url = _imageUrls.removeAt(index);
-                                                _imageUrls.insert(0, url);
-                                              }
-                                            });
-                                          },
-                                          child: Container(
-                                            width: 70,
-                                            height: 70,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: isMain ? Colors.blue : Colors.transparent,
-                                                width: 3,
-                                              ),
-                                              borderRadius: BorderRadius.circular(8),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_imageFiles.length > 1)
+                          SizedBox(
+                            height: 80,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _imageFiles.length,
+                              itemBuilder: (context, index) {
+                                final isMain = index == 0;
+                                return Container(
+                                  width: 74,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  child: Stack(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          // Déplacer l'image sélectionnée en première position (principale)
+                                          setState(() {
+                                            final file = _imageFiles.removeAt(index);
+                                            _imageFiles.insert(0, file);
+                                            if (index < _imageUrls.length) {
+                                              final url = _imageUrls.removeAt(index);
+                                              _imageUrls.insert(0, url);
+                                            }
+                                          });
+                                        },
+                                        child: Container(
+                                          width: 74,
+                                          height: 74,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: isMain ? _orangePrimary : _borderSoft,
+                                              width: isMain ? 2.5 : 1,
                                             ),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: _imageUrls.length > index
-                                                  ? Image.network(_imageUrls[index], fit: BoxFit.cover, width: 70, height: 70)
-                                                  : Image.file(_imageFiles[index], fit: BoxFit.cover, width: 70, height: 70),
+                                            borderRadius: BorderRadius.circular(12),
+                                            color: _offWhite,
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: _imageUrls.length > index
+                                                ? Image.network(_imageUrls[index], fit: BoxFit.cover, width: 74, height: 74)
+                                                : Image.file(_imageFiles[index], fit: BoxFit.cover, width: 74, height: 74),
+                                          ),
+                                        ),
+                                      ),
+                                      if (!isMain)
+                                        Positioned(
+                                          top: 2,
+                                          right: 2,
+                                          child: GestureDetector(
+                                            onTap: () => _removeImage(index),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFFE53935),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(Icons.close, size: 12, color: Colors.white),
                                             ),
                                           ),
                                         ),
-                                        if (!isMain)
-                                          Positioned(
-                                            top: 2,
-                                            right: 2,
-                                            child: GestureDetector(
-                                              onTap: () => _removeImage(index),
-                                              child: Container(
-                                                padding: const EdgeInsets.all(2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(Icons.close, size: 14, color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
+                          ),
+                        if (_imageFiles.isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          if (_imageFiles.isNotEmpty)
-                            TextButton.icon(
-                              onPressed: _isUploading ? null : _pickImages,
-                              icon: const Icon(Icons.add_a_photo),
-                              label: const Text('Ajouter d\'autres photos'),
+                          TextButton.icon(
+                            onPressed: _isUploading ? null : _pickImages,
+                            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                            label: const Text('Ajouter d\'autres photos'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _orangePrimary,
+                              textStyle: const TextStyle(fontWeight: FontWeight.w600),
                             ),
+                          ),
                         ],
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom produit *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.inventory),
+                      ],
+                    ),
+                ],
+              ),
+              _buildSectionCard(
+                title: 'Informations produit',
+                icon: Icons.inventory_2_outlined,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: _inputDecoration(labelText: 'Nom produit *', icon: Icons.inventory_outlined),
+                    validator: (value) => value!.isEmpty ? 'Requis' : null,
                   ),
-                  validator: (value) => value!.isEmpty ? 'Requis' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prix FCFA *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.attach_money),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: _inputDecoration(labelText: 'Prix FCFA *', icon: Icons.attach_money_rounded),
+                    keyboardType: TextInputType.number,
+                    validator: (value) => value!.isEmpty ? 'Requis' : null,
                   ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Requis' : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Catégorie *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.category),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedCategory,
+                    decoration: _inputDecoration(labelText: 'Catégorie *', icon: Icons.category_outlined),
+                    dropdownColor: _white,
+                    iconEnabledColor: _orangePrimary,
+                    items: _categories.map((cat) => DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat),
+                    )).toList(),
+                    onChanged: (value) => setState(() => _selectedCategory = value),
+                    validator: (value) => value == null ? 'Choisir catégorie' : null,
                   ),
-                  items: _categories.map((cat) => DropdownMenuItem(
-                    value: cat,
-                    child: Text(cat),
-                  )).toList(),
-                  onChanged: (value) => setState(() => _selectedCategory = value),
-                  validator: (value) => value == null ? 'Choisir catégorie' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descriptionController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.description),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 4,
+                    decoration: _inputDecoration(labelText: 'Description *', icon: Icons.description_outlined),
+                    validator: (value) => value!.isEmpty ? 'Requis' : null,
                   ),
-                  validator: (value) => value!.isEmpty ? 'Requis' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _vendeurCompteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro téléphone/WhatsApp vendeur *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
+                ],
+              ),
+              _buildSectionCard(
+                title: 'Coordonnées & paiement',
+                icon: Icons.payments_outlined,
+                children: [
+                  TextFormField(
+                    controller: _vendeurCompteController,
+                    decoration: _inputDecoration(
+                      labelText: 'Numéro téléphone/WhatsApp vendeur *',
+                      icon: Icons.phone_outlined,
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) => value!.isEmpty || !RegExp(r'^\+?[\d\s-()]+$').hasMatch(value) ? 'Numéro valide requis' : null,
                   ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value!.isEmpty || !RegExp(r'^\+?[\d\s-()]+$').hasMatch(value) ? 'Numéro valide requis' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _paymentAccountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro compte paiement vendeur (Mobile Money) *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.account_balance_wallet),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _paymentAccountController,
+                    decoration: _inputDecoration(
+                      labelText: 'Numéro compte paiement vendeur (Mobile Money) *',
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) => value!.isEmpty ? 'Requis pour paiements' : null,
                   ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value!.isEmpty ? 'Requis pour paiements' : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedPaymentMethod,
-                  decoration: const InputDecoration(
-                    labelText: 'Moyen paiement vendeur *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.payment),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    value: _selectedPaymentMethod,
+                    decoration: _inputDecoration(labelText: 'Moyen paiement vendeur *', icon: Icons.payment_outlined),
+                    dropdownColor: _white,
+                    iconEnabledColor: _orangePrimary,
+                    items: const [
+                      DropdownMenuItem(value: 'orange_money', child: Text('Orange Money')),
+                      DropdownMenuItem(value: 'mtn_money', child: Text('MTN Money')),
+                      DropdownMenuItem(value: 'moov_money', child: Text('Moov Money')),
+                      DropdownMenuItem(value: 'wave', child: Text('Wave')),
+                      DropdownMenuItem(value: 'espece', child: Text('Espèce')),
+                    ],
+                    onChanged: (value) => setState(() => _selectedPaymentMethod = value),
+                    validator: (value) => value == null ? 'Choisir moyen' : null,
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'orange_money', child: Text('Orange Money')),
-                    DropdownMenuItem(value: 'mtn_money', child: Text('MTN Money')),
-                    DropdownMenuItem(value: 'moov_money', child: Text('Moov Money')),
-                    DropdownMenuItem(value: 'wave', child: Text('Wave')),
-                    DropdownMenuItem(value: 'espece', child: Text('Espèce')),
-                  ],
-                  onChanged: (value) => setState(() => _selectedPaymentMethod = value),
-                  validator: (value) => value == null ? 'Choisir moyen' : null,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
+                ],
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
                   onPressed: (_isUploading || _imageFiles.isEmpty) ? null : _createProduct,
                   // Numéro compte paiement vendeur: $_paymentAccountController
                   // Moyen paiement vendeur: $_selectedPaymentMethod
-                  icon: const Icon(Icons.sell),
-                  label: const Text('Publier produit'),
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  icon: const Icon(Icons.sell_outlined),
+                  label: const Text(
+                    'Publier produit',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _orangePrimary,
+                    foregroundColor: _white,
+                    disabledBackgroundColor: _borderSoft,
+                    disabledForegroundColor: _textMuted,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

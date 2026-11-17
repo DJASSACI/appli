@@ -13,6 +13,14 @@ class BoutiquesScreen extends StatefulWidget {
 }
 
 class _BoutiquesScreenState extends State<BoutiquesScreen> {
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _orangeSecondary = Color(0xFFFFB15C);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -89,35 +97,62 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
         title: const Text(
           'Boutiques certifiées',
+          style: TextStyle(
+            color: _textDark,
+            fontWeight: FontWeight.w700,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
         ),
       ),
       body: Consumer<ProductsProvider>(
         builder: (context, productsProvider, child) {
           if (productsProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: _orangePrimary));
           }
 
           if (productsProvider.error != null) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Erreur: ${productsProvider.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: productsProvider.fetchProducts,
-                    child: const Text('Réessayer'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline_rounded, size: 56, color: _orangePrimary.withValues(alpha: 0.8)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur: ${productsProvider.error}',
+                      style: const TextStyle(color: _textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: productsProvider.fetchProducts,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orangePrimary,
+                        foregroundColor: _white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -129,14 +164,37 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher une boutique',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _borderSoft),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(fontSize: 15, color: _textDark),
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher une boutique',
+                      hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.85), fontSize: 14),
+                      prefixIcon: const Icon(Icons.search_rounded, color: _orangePrimary),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded, color: _textMuted),
+                              onPressed: () {
+                                _searchController.clear();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
@@ -147,12 +205,25 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.search_off, size: 80, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: _orangePrimary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.search_off_rounded, size: 34, color: _orangePrimary.withValues(alpha: 0.7)),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
                           'Aucune boutique trouvée',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textDark),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Essayez un autre nom de boutique',
+                          style: TextStyle(fontSize: 13, color: _textMuted),
                         ),
                       ],
                     ),
@@ -164,12 +235,20 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.store_outlined, size: 80, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: _orangePrimary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.storefront_outlined, size: 34, color: _orangePrimary.withValues(alpha: 0.7)),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
                           'Aucune boutique certifiée',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textDark),
                         ),
                       ],
                     ),
@@ -178,36 +257,109 @@ class _BoutiquesScreenState extends State<BoutiquesScreen> {
               else
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: entries.length,
                     itemBuilder: (context, index) {
                       final nom = entries[index].key;
                       final product = entries[index].value;
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(product.image),
-                            onBackgroundImageError: (_, _) => const Icon(Icons.store),
-                            backgroundColor: Colors.grey[200],
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(18),
+                            onTap: () => _goToSeller(nom, product),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: _white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: _borderSoft),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: Image.network(
+                                        product.image,
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          width: 56,
+                                          height: 56,
+                                          color: _offWhite,
+                                          child: const Icon(Icons.storefront_outlined, color: _textMuted),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            nom,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              color: _textDark,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: _orangePrimary.withValues(alpha: 0.1),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.verified_rounded, size: 13, color: _orangePrimary),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      'Vendeur certifié',
+                                                      style: TextStyle(
+                                                        color: _orangePrimary,
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.storefront_rounded, color: _orangePrimary),
+                                      onPressed: () => _goToSeller(nom, product),
+                                      tooltip: 'Voir la boutique',
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: _orangePrimary.withValues(alpha: 0.08),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          title: Text(
-                            nom,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: const Text(
-                            'Vendeur certifié',
-                            style: TextStyle(color: Colors.green, fontSize: 12),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.storefront, color: Colors.blue),
-                            onPressed: () => _goToSeller(nom, product),
-                            tooltip: 'Voir la boutique',
-                          ),
-                           onTap: () => _goToSeller(nom, product),
                         ),
                       );
                     },

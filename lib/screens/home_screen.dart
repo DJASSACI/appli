@@ -29,20 +29,25 @@ class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   String _selectedCategory = '';
 
-  static const Color _deepBlue = Color(0xFF0F172A);
-  static const Color _turquoise = Color(0xFF00B8A9);
-  static const Color _white = Colors.white;
+  // Orange Premium palette
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _orangeSecondary = Color(0xFFFFB15C);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
 
   static const List<Color> _pastelColors = [
-    Color(0xFFE0F2FE),
-    Color(0xFFF0FDF9),
-    Color(0xFFFEF3C7),
-    Color(0xFFDCFCE7),
-    Color(0xFFFCE7F3),
-    Color(0xFFEDE9FE),
-    Color(0xFFFFEDD5),
-    Color(0xFFECFEFF),
-    Color(0xFFF1F5F9),
+    Color(0xFFFFF3EA),
+    Color(0xFFF8F7F5),
+    Color(0xFFFFF7EF),
+    Color(0xFFF5F5F5),
+    Color(0xFFFFF1E6),
+    Color(0xFFFAFAFA),
+    Color(0xFFFFF8F2),
+    Color(0xFFF7F6F4),
+    Color(0xFFFFF5EC),
   ];
 
   static const Map<String,IconData> _categoryIcons = {
@@ -158,23 +163,26 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = screenWidth < 600 ? 16.0 : 24.0;
     final isSmallScreen = screenWidth < 400;
-    final titleFontSize = isSmallScreen ? 17.0 : 22.0;
+    final titleFontSize = isSmallScreen ? 18.0 : 22.0;
     final iconButtonSize = isSmallScreen ? 40.0 : 48.0;
 
     return Scaffold(
-      backgroundColor: _deepBlue,
+      backgroundColor: _offWhite,
       appBar: AppBar(
-        backgroundColor: _deepBlue,
-        foregroundColor: _white,
+        backgroundColor: _white,
+        foregroundColor: _textDark,
         elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         centerTitle: false,
         automaticallyImplyLeading: false,
         title: Text(
           'Djassa CI',
           style: TextStyle(
-            color: _white,
-            fontWeight: FontWeight.bold,
+            color: _textDark,
+            fontWeight: FontWeight.w800,
             fontSize: titleFontSize,
+            letterSpacing: -0.3,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -188,22 +196,27 @@ class _HomeScreenState extends State<HomeScreen> {
             buttonSize: iconButtonSize,
           ),
           _buildAppBarActionButton(
-            icon: Icons.add_circle,
+            icon: Icons.add_circle_outline,
             tooltip: 'Vendre',
             onPressed: () => context.go('/sell'),
             buttonSize: iconButtonSize,
           ),
           const NotificationBell(),
           _buildAppBarActionButton(
-            icon: Icons.person,
+            icon: Icons.person_outline,
             tooltip: 'Profil',
             onPressed: () => context.go('/profile'),
             buttonSize: iconButtonSize,
           ),
           if (!isSmallScreen) const SizedBox(width: 8),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: RefreshIndicator(
+        color: _orangePrimary,
         onRefresh: () =>
             Provider.of<ProductsProvider>(context, listen: false).fetchProducts(),
         child: SingleChildScrollView(
@@ -229,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 minWidth: buttonSize,
                 minHeight: buttonSize,
               ),
-              icon: const Icon(Icons.shopping_cart, color: _white),
+              icon: const Icon(Icons.shopping_cart_outlined, color: _textDark),
               tooltip: 'Panier',
               onPressed: () => context.go('/cart'),
             ),
@@ -238,20 +251,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 right: 4,
                 top: 4,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: _turquoise,
-                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _orangePrimary,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
+                    minWidth: 18,
+                    minHeight: 18,
                   ),
                   child: Text(
                     '${cartProvider.itemCount}',
                     style: const TextStyle(
                       color: _white,
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -276,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
         minHeight: buttonSize,
       ),
       icon: Icon(icon),
-      color: _white,
+      color: _textDark,
       tooltip: tooltip,
       onPressed: onPressed,
     );
@@ -286,20 +299,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: _white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
+        color: _offWhite,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 8),
           _buildWelcomeBanner(horizontalPadding),
           _buildSearchBar(horizontalPadding),
           _buildCertificationBanner(),
           _buildShortcutsGrid(horizontalPadding),
           _buildProductsSection(horizontalPadding),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -314,79 +325,82 @@ class _HomeScreenState extends State<HomeScreen> {
         final fullName = ('$prenom $nom').trim();
         final displayName = fullName.isNotEmpty ? fullName : 'utilisateur';
 
-        return Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 18),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        return Padding(
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 4),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF171717), Color(0xFF2C2C2C)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: _turquoise,
-                  shape: BoxShape.circle,
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _orangePrimary.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _orangeSecondary.withValues(alpha: 0.35)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.waving_hand_rounded, color: _orangeSecondary, size: 24),
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '👋',
-                  style: TextStyle(fontSize: 22),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bienvenue sur DJASSACI',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Heureux de vous retrouver !',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bienvenue sur DJASSACI',
-                      style: TextStyle(
-                        color: _white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      displayName,
-                      style: TextStyle(
-                        color: _turquoise,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Heureux de vous retrouver !',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -395,19 +409,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchBar(double horizontalPadding) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: _white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300, width: 1),
+          border: Border.all(color: _borderSoft, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: TextField(
           controller: _searchController,
           decoration: InputDecoration(
             hintText: 'Rechercher des produits...',
-            hintStyle: TextStyle(color: Colors.grey.shade500),
-            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+            hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.8), fontSize: 14),
+            prefixIcon: const Icon(Icons.search_rounded, color: _orangePrimary),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
@@ -432,18 +453,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
 Widget _buildShortcutsGrid(double horizontalPadding) {
     final items = [
-      _ShortcutData(Icons.home_repair_service, 'Services'),
-      _ShortcutData(Icons.storefront, 'Boutiques'),
-      _ShortcutData(Icons.add_circle, 'Vendre'),
-      _ShortcutData(Icons.shopping_bag, 'Commandes'),
-      _ShortcutData(Icons.category, 'Catégories'),
-      _ShortcutData(Icons.local_offer, 'Promotions'),
-      _ShortcutData(Icons.inventory_2, 'Mes produits'),
-      _ShortcutData(Icons.smart_toy, 'MAWA'),
+      _ShortcutData(Icons.home_repair_service_outlined, 'Services'),
+      _ShortcutData(Icons.storefront_outlined, 'Boutiques'),
+      _ShortcutData(Icons.add_circle_outline, 'Vendre'),
+      _ShortcutData(Icons.shopping_bag_outlined, 'Commandes'),
+      _ShortcutData(Icons.grid_view_rounded, 'Catégories'),
+      _ShortcutData(Icons.local_offer_outlined, 'Promotions'),
+      _ShortcutData(Icons.inventory_2_outlined, 'Mes produits'),
+      _ShortcutData(Icons.smart_toy_outlined, 'MAWA'),
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
       child: ValueListenableBuilder<int>(
         valueListenable: NotificationService.orderUnreadNotifier,
         builder: (context, orderCount, child) {
@@ -462,7 +483,6 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  final bgColor = _pastelColors[index % _pastelColors.length];
                   int badgeCount = 0;
                   if (item.label == 'Commandes') {
                     badgeCount = orderCount;
@@ -472,7 +492,7 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
                   return _ShortcutCard(
                     icon: item.icon,
                     label: item.label,
-                    backgroundColor: bgColor,
+                    accentColor: index % 2 == 0 ? _orangePrimary : _orangeSecondary,
                     onTap: () => _handleShortcutTap(item.label),
                     badgeCount: badgeCount,
                   );
@@ -494,21 +514,35 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 8),
-              child: const Text(
-                'Produits récents',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
+              padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: _orangePrimary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Produits récents',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _textDark,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
             _buildCategoryChips(productsProvider),
             if (productsProvider.isLoading && products.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator(color: _orangePrimary)),
               )
             else if (productsProvider.error != null && products.isEmpty)
               _buildErrorState(productsProvider, horizontalPadding)
@@ -543,21 +577,23 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
     final isSelected = _selectedCategory == category;
     final idx = categories.indexOf(category) % _pastelColors.length;
     final bgColor = isSelected
-        ? _turquoise
-        : _pastelColors['Tous' == label ? 0 : idx].withValues(alpha: 0.7);
-    final textColor = isSelected ? _white : Colors.grey.shade800;
+        ? _orangePrimary
+        : (label == 'Tous' ? _white : _pastelColors[idx < 0 ? 0 : idx].withValues(alpha: 0.6));
+    final textColor = isSelected ? _white : _textDark;
     final icon = label == 'Tous' ? Icons.all_inclusive : _categoryIcons[label];
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
-        label: Text(label, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
-        avatar: icon != null ? Icon(icon, size: 18, color: textColor) : null,
+        label: Text(label, style: TextStyle(color: textColor, fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500)),
+        avatar: icon != null ? Icon(icon, size: 16, color: textColor) : null,
         backgroundColor: bgColor,
         selected: isSelected,
-        selectedColor: _turquoise,
+        selectedColor: _orangePrimary,
         checkmarkColor: _white,
-        side: BorderSide(color: isSelected ? _turquoise : Colors.grey.shade300, width: 1),
+        side: BorderSide(color: isSelected ? _orangePrimary : _borderSoft, width: 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         onSelected: (_) {
           Provider.of<ProductsProvider>(context, listen: false).searchProducts('');
           _onCategorySelected(category);
@@ -576,19 +612,21 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+          Icon(Icons.error_outline_rounded, size: 56, color: _orangePrimary.withValues(alpha: 0.8)),
           const SizedBox(height: 16),
           Text(
             'Erreur: ${productsProvider.error}',
-            style: TextStyle(color: Colors.grey.shade700),
+            style: const TextStyle(color: _textMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: productsProvider.fetchProducts,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _turquoise,
+              backgroundColor: _orangePrimary,
               foregroundColor: _white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Réessayer'),
           ),
@@ -600,15 +638,28 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
   Widget _buildEmptyState(double horizontalPadding) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 32, horizontalPadding, 32),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 40, horizontalPadding, 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 80, color: Colors.grey.shade300),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: _orangePrimary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.search_off_rounded, size: 34, color: _orangePrimary.withValues(alpha: 0.7)),
+          ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Aucun produit trouvé',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textDark),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Essayez une autre recherche ou catégorie',
+            style: TextStyle(fontSize: 13, color: _textMuted),
           ),
         ],
       ),
@@ -623,14 +674,14 @@ Widget _buildShortcutsGrid(double horizontalPadding) {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: _productsCrossAxisCount(context),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.75,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 0.72,
         ),
         itemCount: products.length + (isLoading ? 1 : 0),
         itemBuilder: (context, index) {
           if (isLoading && index == products.length) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: _orangePrimary));
           }
           return _ProductCard(product: products[index]);
         },
@@ -648,14 +699,14 @@ class _ShortcutData {
 class _ShortcutCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color backgroundColor;
+  final Color accentColor;
   final VoidCallback onTap;
   final int badgeCount;
 
   const _ShortcutCard({
     required this.icon,
     required this.label,
-    required this.backgroundColor,
+    required this.accentColor,
     required this.onTap,
     this.badgeCount = 0,
   });
@@ -663,49 +714,53 @@ class _ShortcutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final iconSize = screenW < 400 ? 28.0 : 32.0;
-    final fontSize = screenW < 400 ? 12.0 : 13.0;
+    final iconSize = screenW < 400 ? 24.0 : 26.0;
+    final fontSize = screenW < 400 ? 11.0 : 12.0;
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Container(
+        child: Ink(
           decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200, width: 0.5),
+            color: _HomeScreenState._white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _HomeScreenState._borderSoft),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-children: [
+            children: [
                 badgeCount > 0
                     ? Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.topRight,
                         children: [
                           Container(
-                            width: 56,
-                            height: 56,
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: accentColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.grey.shade200, width: 1),
                             ),
-                            child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
+                            child: Icon(icon, color: accentColor, size: iconSize),
                           ),
                           Positioned(
-                            right: -2,
-                            top: -2,
+                            right: -4,
+                            top: -4,
                             child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _HomeScreenState._orangePrimary,
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               constraints: const BoxConstraints(
                                 minWidth: 18,
@@ -725,26 +780,28 @@ children: [
                         ],
                       )
                     : Container(
-                        width: 56,
-                        height: 56,
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: accentColor.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade200, width: 1),
                         ),
-                        child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
+                        child: Icon(icon, color: accentColor, size: iconSize),
                       ),
                 const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0F172A),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w600,
+                      color: _HomeScreenState._textDark,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
           ),
@@ -894,7 +951,7 @@ class _ProductCardState extends State<_ProductCard> {
                     try {
                       await ApiService.createOrder(data);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Commande réussie !'), backgroundColor: Color(0xFF00B8A9)),
+                        const SnackBar(content: Text('Commande réussie !'), backgroundColor: _HomeScreenState._orangePrimary),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -904,7 +961,7 @@ class _ProductCardState extends State<_ProductCard> {
                   }
                 : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00B8A9),
+                backgroundColor: _HomeScreenState._orangePrimary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -921,113 +978,144 @@ class _ProductCardState extends State<_ProductCard> {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final isVerified = _isSellerVerifiedFromProduct(widget.product);
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.06),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: InkWell(
-              onTap: () {
-                context.push(
-                  '/product/${widget.product.id}',
-                  extra: widget.product,
-                );
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: CachedNetworkImage(
-                  imageUrl: widget.product.image,
-                  height: double.infinity,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.error, color: Colors.grey),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          context.push(
+            '/product/${widget.product.id}',
+            extra: widget.product,
+          );
+        },
+        child: Ink(
+          decoration: BoxDecoration(
+            color: _HomeScreenState._white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _HomeScreenState._borderSoft),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 6,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                      child: CachedNetworkImage(
+                        imageUrl: widget.product.image,
+                        height: double.infinity,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: _HomeScreenState._offWhite,
+                          child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: _HomeScreenState._offWhite,
+                          child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                        ),
+                      ),
+                    ),
+                    if (isVerified)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _HomeScreenState._orangePrimary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified, size: 12, color: Colors.white),
+                              SizedBox(width: 3),
+                              Text('Certifié', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: _HomeScreenState._textDark,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${widget.product.price.toStringAsFixed(0)} FCFA',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: _HomeScreenState._orangePrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.product.categorie} • ${widget.product.vendeurNom}',
+                        style: const TextStyle(
+                          color: _HomeScreenState._textMuted,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 34,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                          label: const Text('Panier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _HomeScreenState._orangePrimary.withValues(alpha: 0.08),
+                            foregroundColor: _HomeScreenState._orangePrimary,
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            side: BorderSide(color: _HomeScreenState._orangePrimary.withValues(alpha: 0.15)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          onPressed: () {
+                            cartProvider.addItem(widget.product);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ajouté au panier'), backgroundColor: _HomeScreenState._orangePrimary),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.product.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isVerified)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00B8A9),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.verified, size: 12, color: Colors.white),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${widget.product.price.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF00B8A9),
-                    ),
-                  ),
-                  Text(
-                    '${widget.product.categorie} • ${widget.product.vendeurNom}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 36,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Panier'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade100,
-                        foregroundColor: const Color(0xFF0F172A),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      ),
-                      onPressed: () {
-                        cartProvider.addItem(widget.product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ajouté au panier'), backgroundColor: Color(0xFF00B8A9)),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

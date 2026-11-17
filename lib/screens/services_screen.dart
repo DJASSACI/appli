@@ -14,6 +14,13 @@ class ServicesScreen extends StatefulWidget {
 }
 
 class _ServicesScreenState extends State<ServicesScreen> {
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   @override
   void initState() {
     super.initState();
@@ -29,42 +36,94 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: _textDark),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Services'),
+        title: const Text(
+          'Services',
+          style: TextStyle(
+            color: _textDark,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: _textDark),
             onPressed: () {
               Provider.of<ProductsProvider>(context, listen: false)
                   .fetchProducts();
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: Consumer<ProductsProvider>(
         builder: (context, productsProvider, child) {
           if (productsProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: _orangePrimary),
+            );
           }
 
           if (productsProvider.error != null) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(productsProvider.error!),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => productsProvider.fetchProducts(),
-                    child: const Text('Réessayer'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: _orangePrimary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.error_outline_rounded,
+                        size: 36,
+                        color: _orangePrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      productsProvider.error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: _textMuted, fontSize: 14),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => productsProvider.fetchProducts(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orangePrimary,
+                        foregroundColor: _white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Réessayer',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -72,15 +131,37 @@ class _ServicesScreenState extends State<ServicesScreen> {
           final services = _getServices(productsProvider.products);
 
           if (services.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.home_repair_service, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: _orangePrimary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.home_repair_service_outlined,
+                      size: 38,
+                      color: _orangePrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
                     'Aucun service disponible',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Revenez plus tard pour découvrir de nouveaux services.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: _textMuted),
                   ),
                 ],
               ),
@@ -88,6 +169,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           }
 
           return RefreshIndicator(
+            color: _orangePrimary,
             onRefresh: () => productsProvider.fetchProducts(),
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
@@ -114,6 +196,13 @@ class _ServiceCard extends StatelessWidget {
 
   const _ServiceCard({required this.product});
 
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   bool _isSellerVerified(Product product) {
     final vendeur = product.vendeur;
     if (vendeur is Map<String, dynamic>) {
@@ -128,10 +217,19 @@ class _ServiceCard extends StatelessWidget {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final isVerified = _isSellerVerified(product);
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.06),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           Expanded(
@@ -143,21 +241,37 @@ class _ServiceCard extends StatelessWidget {
                   extra: product,
                 );
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: CachedNetworkImage(
                   imageUrl: product.image,
                   height: double.infinity,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, color: Colors.grey),
+                    color: _offWhite,
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: _textMuted,
+                        size: 30,
+                      ),
+                    ),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.error, color: Colors.grey),
+                    color: _offWhite,
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: _textMuted,
+                        size: 30,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -166,7 +280,7 @@ class _ServiceCard extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -176,9 +290,10 @@ class _ServiceCard extends StatelessWidget {
                         child: Text(
                           product.name,
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Color(0xFF0F172A)),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: _textDark,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -186,55 +301,73 @@ class _ServiceCard extends StatelessWidget {
                       if (isVerified)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
+                            horizontal: 5,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF00B8A9),
+                            color: _orangePrimary,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.verified,
-                              size: 12, color: Colors.white),
+                          child: const Icon(
+                            Icons.verified,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     '${product.price.toStringAsFixed(0)} FCFA',
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: Color(0xFF00B8A9),
+                      color: _orangePrimary,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     '${product.categorie} • ${product.vendeurNom}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
+                    style: const TextStyle(
+                      color: _textMuted,
                       fontSize: 12,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     height: 36,
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Panier'),
+                      icon: const Icon(Icons.shopping_cart_outlined, size: 16),
+                      label: const Text(
+                        'Panier',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade100,
-                        foregroundColor: const Color(0xFF0F172A),
+                        backgroundColor: _orangePrimary.withValues(alpha: 0.1),
+                        foregroundColor: _orangePrimary,
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        side: BorderSide(
+                          color: _orangePrimary.withValues(alpha: 0.18),
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                       ),
                       onPressed: () {
                         cartProvider.addItem(product);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Ajouté au panier'),
-                              backgroundColor: Color(0xFF00B8A9)),
+                            content: Text('Ajouté au panier'),
+                            backgroundColor: _orangePrimary,
+                          ),
                         );
                       },
                     ),

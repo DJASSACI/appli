@@ -16,19 +16,24 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  static const Color _deepBlue = Color(0xFF0F172A);
-  static const Color _turquoise = Color(0xFF00B8A9);
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _orangeSecondary = Color(0xFFFFB15C);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
 
   static const List<Color> _pastelColors = [
-    Color(0xFFE0F2FE),
-    Color(0xFFF0FDF9),
-    Color(0xFFFEF3C7),
-    Color(0xFFDCFCE7),
-    Color(0xFFFCE7F3),
-    Color(0xFFEDE9FE),
-    Color(0xFFFFEDD5),
-    Color(0xFFECFEFF),
-    Color(0xFFF1F5F9),
+    Color(0xFFFFF3EA),
+    Color(0xFFF8F7F5),
+    Color(0xFFFFF7EF),
+    Color(0xFFF5F5F5),
+    Color(0xFFFFF1E6),
+    Color(0xFFFAFAFA),
+    Color(0xFFFFF8F2),
+    Color(0xFFF7F6F4),
+    Color(0xFFFFF5EC),
   ];
 
   String? _selectedCategory;
@@ -132,25 +137,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _offWhite,
         appBar: AppBar(
-          backgroundColor: _deepBlue,
-          foregroundColor: Colors.white,
+          backgroundColor: _white,
+          foregroundColor: _textDark,
           elevation: 0,
+          scrolledUnderElevation: 0.5,
+          surfaceTintColor: _white,
           automaticallyImplyLeading: false,
           title: Text(
             _appBarTitle(),
             style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+              color: _textDark,
+              fontWeight: FontWeight.w700,
               fontSize: titleFontSize,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textDark, size: 20),
             onPressed: _goBack,
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: _borderSoft),
           ),
         ),
         body: Consumer<ProductsProvider>(
@@ -163,11 +174,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
+                      color: _offWhite,
                     ),
                     child: _buildContent(productsProvider, products, horizontalPadding),
                   ),
@@ -226,7 +233,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 40, horizontalPadding, 40),
       width: double.infinity,
-      child: const Center(child: CircularProgressIndicator()),
+      child: const Center(child: CircularProgressIndicator(color: _orangePrimary)),
     );
   }
 
@@ -237,19 +244,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+          Icon(Icons.error_outline_rounded, size: 56, color: _orangePrimary.withValues(alpha: 0.8)),
           const SizedBox(height: 16),
           Text(
             'Erreur: ${productsProvider.error}',
-            style: TextStyle(color: Colors.grey.shade700),
+            style: const TextStyle(color: _textMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: productsProvider.fetchProducts,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _turquoise,
-              foregroundColor: Colors.white,
+              backgroundColor: _orangePrimary,
+              foregroundColor: _white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Réessayer'),
           ),
@@ -268,13 +277,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
-          child: const Text(
-            'Toutes les catégories',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: _deepBlue,
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: _orangePrimary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Toutes les catégories',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _textDark,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
           ),
         ),
         Padding(
@@ -306,6 +329,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             },
           ),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -316,34 +340,53 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
-          child: Text(
-            'Villes pour $_selectedCategory',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: _deepBlue,
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _orangePrimary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Villes pour $_selectedCategory',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _textDark,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
         if (cities.isEmpty)
-          _buildCityItem('Tous les produits', _turquoise.withValues(alpha: 0.1), _turquoise, horizontalPadding, () {
+          _buildCityItem('Tous les produits', _orangePrimary.withValues(alpha: 0.08), _orangePrimary, horizontalPadding, () {
             setState(() {
               _selectedCity = '';
             });
           })
         else
           ...[
-            _buildCityItem('Tous les produits', _turquoise.withValues(alpha: 0.1), _turquoise, horizontalPadding, () {
+            _buildCityItem('Tous les produits', _orangePrimary.withValues(alpha: 0.08), _orangePrimary, horizontalPadding, () {
               setState(() {
                 _selectedCity = '';
               });
             }),
-            ...cities.asMap().entries.map((entry) => _buildCityItem(entry.value, _pastelColors[entry.key % _pastelColors.length], Colors.grey.shade700, horizontalPadding, () {
+            ...cities.asMap().entries.map((entry) => _buildCityItem(entry.value, _pastelColors[entry.key % _pastelColors.length], _textMuted, horizontalPadding, () {
               setState(() {
                 _selectedCity = entry.value;
               });
             })),
           ],
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -351,23 +394,51 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildCityItem(String label, Color bgColor, Color iconColor, double horizontalPadding, VoidCallback onTap) {
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 4),
-      child: Card(
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: bgColor,
-            child: Icon(Icons.location_on, color: iconColor, size: 24),
-          ),
-          title: Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.w600, color: _deepBlue, fontSize: 15),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: _white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _borderSoft),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.location_on_rounded, color: iconColor, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w600, color: _textDark, fontSize: 15),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, size: 22, color: _textMuted),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -383,13 +454,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
-          child: Text(
-            'Produits de $_selectedCategory',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: _deepBlue,
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _orangePrimary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Produits de $_selectedCategory',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _textDark,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
         Padding(
@@ -399,9 +488,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: _gridCount(context),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.75,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.72,
             ),
             itemCount: products.length,
             itemBuilder: (context, index) {
@@ -420,11 +509,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: Colors.grey.shade300),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: _orangePrimary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 34, color: _orangePrimary.withValues(alpha: 0.7)),
+          ),
           const SizedBox(height: 16),
           Text(
             message,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textDark),
             textAlign: TextAlign.center,
           ),
         ],
@@ -449,47 +546,54 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 400;
-    final iconSize = isSmall ? 28.0 : 32.0;
-    final fontSize = isSmall ? 12.0 : 13.0;
+    final iconSize = isSmall ? 24.0 : 26.0;
+    final fontSize = isSmall ? 11.0 : 12.0;
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.06),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Container(
+        child: Ink(
           decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200, width: 0.5),
+            color: _CategoriesScreenState._white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _CategoriesScreenState._borderSoft),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: isSmall ? 48 : 56,
-                height: isSmall ? 48 : 56,
+                width: isSmall ? 46 : 50,
+                height: isSmall ? 46 : 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: _CategoriesScreenState._orangePrimary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade200, width: 1),
                 ),
-                child: Icon(icon, color: const Color(0xFF0F172A), size: iconSize),
+                child: Icon(icon, color: _CategoriesScreenState._orangePrimary, size: iconSize),
               ),
               const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0F172A),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: _CategoriesScreenState._textDark,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -516,120 +620,145 @@ class _CategoryProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final isVerified = _isSellerVerified();
-    const Color deepBlue = Color(0xFF0F172A);
-    const Color turquoise = Color(0xFF00B8A9);
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.06),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: InkWell(
-              onTap: () {
-                context.push('/product/${product.id}', extra: product);
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: CachedNetworkImage(
-                  imageUrl: product.image,
-                  height: double.infinity,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.error, color: Colors.grey),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          context.push('/product/${product.id}', extra: product);
+        },
+        child: Ink(
+          decoration: BoxDecoration(
+            color: _CategoriesScreenState._white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _CategoriesScreenState._borderSoft),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 6,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                      child: CachedNetworkImage(
+                        imageUrl: product.image,
+                        height: double.infinity,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: _CategoriesScreenState._offWhite,
+                          child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: _CategoriesScreenState._offWhite,
+                          child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                        ),
+                      ),
+                    ),
+                    if (isVerified)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _CategoriesScreenState._orangePrimary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified, size: 12, color: Colors.white),
+                              SizedBox(width: 3),
+                              Text('Certifié', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: _CategoriesScreenState._textDark,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${product.price.toStringAsFixed(0)} FCFA',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: _CategoriesScreenState._orangePrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${product.categorie} • ${product.vendeurNom}',
+                        style: const TextStyle(
+                          color: _CategoriesScreenState._textMuted,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 34,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                          label: const Text('Panier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _CategoriesScreenState._orangePrimary.withValues(alpha: 0.08),
+                            foregroundColor: _CategoriesScreenState._orangePrimary,
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            side: BorderSide(color: _CategoriesScreenState._orangePrimary.withValues(alpha: 0.15)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          onPressed: () {
+                            cartProvider.addItem(product);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Ajouté au panier'),
+                                backgroundColor: _CategoriesScreenState._orangePrimary,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: deepBlue,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isVerified)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: turquoise,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.verified, size: 12, color: Colors.white),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${product.price.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: turquoise,
-                    ),
-                  ),
-                  Text(
-                    '${product.categorie} • ${product.vendeurNom}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 36,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Panier'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade100,
-                        foregroundColor: deepBlue,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      ),
-                      onPressed: () {
-                        cartProvider.addItem(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ajouté au panier'),
-                            backgroundColor: turquoise,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

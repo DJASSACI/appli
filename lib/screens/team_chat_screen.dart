@@ -8,7 +8,6 @@ import '../models/team_message.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/team_chat_service.dart';
-import '../utils/colors.dart';
 import '../widgets/back_arrow.dart';
 
 class TeamChatScreen extends StatefulWidget {
@@ -28,6 +27,14 @@ class TeamChatScreen extends StatefulWidget {
 }
 
 class _TeamChatScreenState extends State<TeamChatScreen> {
+  // Orange Premium palette (visual only)
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TeamChatService _socketService = TeamChatService();
@@ -223,44 +230,120 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
   @override
   Widget build(BuildContext context) {
     final title = widget.teamTitle?.trim().isNotEmpty == true ? widget.teamTitle! : 'Discussion équipe #${widget.teamId}';
+    final statusText = _readOnly ? 'Lecture seule' : (_joined ? 'Connecté' : 'Connexion...');
+    final statusColor = _readOnly ? _textMuted : (_joined ? Colors.green : _orangePrimary);
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 16)),
-            Text(_readOnly ? 'Lecture seule' : (_joined ? 'Connecté' : 'Connexion...'),
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, color: _textDark, fontWeight: FontWeight.w700),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  statusText,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _textMuted),
+                ),
+              ],
+            ),
           ],
         ),
-        backgroundColor: AppColors.primaryColor,
-        foregroundColor: Colors.white,
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadHistory, tooltip: 'Actualiser'),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: _textDark),
+            onPressed: _loadHistory,
+            tooltip: 'Actualiser',
+          ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: Column(
         children: [
           if (_error != null)
             Container(
               width: double.infinity,
-              color: Colors.orange.shade50,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Text(_error!, style: const TextStyle(color: Colors.black87, fontSize: 13)),
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: _orangePrimary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _orangePrimary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 18, color: _orangePrimary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: _textDark, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
           if (_readOnly)
             Container(
               width: double.infinity,
-              color: Colors.grey.shade200,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: const Text('Cette équipe est terminée/expirée : l\'historique est consultable, l\'envoi est désactivé.'),
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: _white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderSoft),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Icon(Icons.lock_outline, size: 18, color: _textMuted),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Cette équipe est terminée/expirée : l\'historique est consultable, l\'envoi est désactivé.',
+                      style: TextStyle(color: _textMuted, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: _orangePrimary))
                 : _messages.isEmpty
-                    ? const Center(child: Text('Aucun message pour le moment.'))
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.chat_bubble_outline, size: 52, color: _textMuted),
+                            SizedBox(height: 10),
+                            Text(
+                              'Aucun message pour le moment.',
+                              style: TextStyle(color: _textMuted, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(16),
@@ -268,6 +351,8 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                         itemBuilder: (context, index) {
                           final m = _messages[index];
                           final me = _currentUserId != null && m.isSentBy(_currentUserId!);
+                          final bubbleColor = me ? _orangePrimary : _white;
+                          final bubbleBorder = me ? Colors.transparent : _borderSoft;
                           return Align(
                             alignment: me ? Alignment.centerRight : Alignment.centerLeft,
                             child: Container(
@@ -275,17 +360,63 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
                               decoration: BoxDecoration(
-                                color: me ? AppColors.primaryColor : Colors.grey[200],
+                                color: bubbleColor,
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: bubbleBorder),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                                 children: [
                                   if (!me)
-                                    Text('Membre #${m.senderId}', style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w600)),
-                                  Text(m.message, style: TextStyle(color: me ? Colors.white : Colors.black87, fontSize: 15)),
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 18,
+                                            height: 18,
+                                            decoration: BoxDecoration(
+                                              color: _orangePrimary.withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.person, size: 12, color: _orangePrimary),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Membre #${m.senderId}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: _textMuted,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  Text(
+                                    m.message,
+                                    style: TextStyle(
+                                      color: me ? _white : _textDark,
+                                      fontSize: 15,
+                                      height: 1.3,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text(_formatTime(m.createdAt), style: TextStyle(color: me ? Colors.white70 : Colors.grey[600], fontSize: 11)),
+                                  Text(
+                                    _formatTime(m.createdAt),
+                                    style: TextStyle(
+                                      color: me ? _white.withValues(alpha: 0.8) : _textMuted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -295,7 +426,11 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
           ),
           SafeArea(
             top: false,
-            child: Padding(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: _white,
+                border: Border(top: BorderSide(color: _borderSoft)),
+              ),
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: Row(
                 children: [
@@ -305,10 +440,26 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                       enabled: !_readOnly,
                       decoration: InputDecoration(
                         hintText: _readOnly ? 'Chat en lecture seule' : 'Tapez votre message...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                        hintStyle: const TextStyle(color: _textMuted),
                         filled: true,
-                        fillColor: _readOnly ? Colors.grey[200] : Colors.grey[100],
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        fillColor: _readOnly ? _borderSoft.withValues(alpha: 0.5) : _offWhite,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(color: _borderSoft),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(color: _borderSoft),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(color: _borderSoft),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(color: _orangePrimary, width: 1.5),
+                        ),
                       ),
                       maxLines: null,
                       textInputAction: TextInputAction.send,
@@ -316,13 +467,30 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  FloatingActionButton(
-                    onPressed: (_readOnly || _isSending) ? null : _sendMessage,
-                    mini: true,
-                    backgroundColor: (_readOnly || _isSending) ? Colors.grey : AppColors.primaryColor,
-                    child: _isSending
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send, color: Colors.white),
+                  Material(
+                    color: (_readOnly || _isSending) ? _borderSoft : _orangePrimary,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: (_readOnly || _isSending) ? null : _sendMessage,
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Center(
+                          child: _isSending
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: _white),
+                                )
+                              : Icon(
+                                  Icons.send_rounded,
+                                  color: (_readOnly || _isSending) ? _textMuted : _white,
+                                  size: 20,
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

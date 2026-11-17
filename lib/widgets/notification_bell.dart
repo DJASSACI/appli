@@ -21,7 +21,6 @@ class NotificationBell extends StatelessWidget {
                 minHeight: 48,
               ),
               icon: const Icon(Icons.notifications_outlined),
-              color: Colors.white,
               tooltip: 'Notifications',
               onPressed: () => context.push('/notifications'),
             ),

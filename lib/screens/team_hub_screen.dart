@@ -18,6 +18,14 @@ class TeamHubScreen extends StatefulWidget {
 }
 
 class _TeamHubScreenState extends State<TeamHubScreen> {
+  // Orange Premium palette (visual only)
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   final TextEditingController _codeController = TextEditingController();
   bool _isCreatingTeam = false;
   bool _isJoiningByCode = false;
@@ -170,70 +178,288 @@ class _TeamHubScreenState extends State<TeamHubScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
-        title: const Text('Achat en équipe'),
+        title: const Text(
+          'Achat en équipe',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          Text(
-            widget.promotion.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          _buildPromotionCard(),
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _isCreatingTeam ? null : _createTeam,
-              icon: _isCreatingTeam
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.group_add),
-              label: Text(_isCreatingTeam ? 'Création de l\'équipe...' : 'Créer une équipe'),
+          _buildSectionHeader(
+            icon: Icons.group_add_outlined,
+            title: 'Créer une équipe',
+            subtitle: 'Lancez une nouvelle équipe pour cette promotion.',
+          ),
+          const SizedBox(height: 10),
+          _buildCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Conditions de participation',
+                  style: TextStyle(fontWeight: FontWeight.w700, color: _textDark),
+                ),
+                const SizedBox(height: 8),
+                _buildBullet('Maximum 10 participants par équipe.'),
+                _buildBullet('Durée de 15 jours.'),
+                _buildBullet('Le bénéficiaire est le créateur de l\'équipe.'),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _isCreatingTeam ? null : _createTeam,
+                    icon: _isCreatingTeam
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _white),
+                          )
+                        : const Icon(Icons.group_add),
+                    label: Text(_isCreatingTeam ? 'Création de l\'équipe...' : 'Créer une équipe'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _orangePrimary,
+                      foregroundColor: _white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: (_isCreatingTeam || _isJoiningByCode) ? null : _joinByCode,
-              icon: _isJoiningByCode
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.groups),
-              label: Text(_isJoiningByCode ? 'Recherche...' : 'Contribuer à une équipe'),
+          const SizedBox(height: 22),
+          _buildSectionHeader(
+            icon: Icons.groups_outlined,
+            title: 'Rejoindre une équipe',
+            subtitle: 'Saisissez le code d\'invitation pour contribuer à une équipe existante.',
+          ),
+          const SizedBox(height: 10),
+          _buildCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pour contribuer à une équipe existante, saisissez le code d\'invitation :',
+                  style: TextStyle(color: _textDark, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _codeController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    labelText: 'Code d\'invitation',
+                    hintText: 'Ex. TEAM-ABC123',
+                    errorText: _codeError,
+                    labelStyle: const TextStyle(color: _textMuted),
+                    hintStyle: const TextStyle(color: _textMuted),
+                    prefixIcon: const Icon(Icons.vpn_key_outlined, color: _textMuted),
+                    filled: true,
+                    fillColor: _offWhite,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: _borderSoft),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: _borderSoft),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: _orangePrimary, width: 1.5),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                  ),
+                  onChanged: (_) {
+                    if (_codeError != null) setState(() => _codeError = null);
+                  },
+                  onSubmitted: (_) => _joinByCode(),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: (_isCreatingTeam || _isJoiningByCode) ? null : _joinByCode,
+                    icon: _isJoiningByCode
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _orangePrimary),
+                          )
+                        : const Icon(Icons.login),
+                    label: Text(_isJoiningByCode ? 'Recherche...' : 'Rejoindre l\'équipe'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _orangePrimary,
+                      side: const BorderSide(color: _orangePrimary, width: 1.4),
+                      backgroundColor: _white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: (_isCreatingTeam || _isJoiningByCode) ? null : _joinByCode,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _orangePrimary,
+                      foregroundColor: _white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                    child: const Text('Rejoindre l\'équipe'),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Pour contribuer à une équipe existante, saisissez le code d\'invitation :',
-            style: TextStyle(color: Colors.black87),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromotionCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _codeController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              labelText: 'Code d\'invitation',
-              hintText: 'Ex. TEAM-ABC123',
-              border: const OutlineInputBorder(),
-              errorText: _codeError,
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _orangePrimary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            onChanged: (_) {
-              if (_codeError != null) setState(() => _codeError = null);
-            },
-            onSubmitted: (_) => _joinByCode(),
+            child: const Icon(Icons.local_offer_outlined, color: _orangePrimary),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: (_isCreatingTeam || _isJoiningByCode) ? null : _joinByCode,
-              child: const Text('Rejoindre l\'équipe'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Promotion concernée',
+                  style: TextStyle(fontSize: 13, color: _textMuted, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.promotion.name,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _textDark),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({required IconData icon, required String title, required String subtitle}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: _orangePrimary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: _orangePrimary, size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textDark),
+              ),
+              const SizedBox(height: 2),
+              Text(subtitle, style: const TextStyle(fontSize: 13, color: _textMuted, height: 1.3)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 7),
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(color: _orangePrimary, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(color: _textMuted, height: 1.35))),
         ],
       ),
     );

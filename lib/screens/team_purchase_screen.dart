@@ -24,6 +24,14 @@ class TeamPurchaseScreen extends StatefulWidget {
 }
 
 class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
+  // Orange Premium palette (visual only)
+  static const Color _orangePrimary = Color(0xFFF47721);
+  static const Color _textDark = Color(0xFF171717);
+  static const Color _offWhite = Color(0xFFF8F7F5);
+  static const Color _white = Color(0xFFFFFFFF);
+  static const Color _textMuted = Color(0xFF777777);
+  static const Color _borderSoft = Color(0xFFEAE6E1);
+
   TeamPurchase? _team;
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -241,17 +249,26 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
           }
 
           return AlertDialog(
-            title: const Text('Contribuer à l\'équipe'),
+            backgroundColor: _white,
+            surfaceTintColor: _white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            title: const Text(
+              'Contribuer à l\'équipe',
+              style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Montant restant affiché : ${_formatPrice(remaining)}'),
+                  Text(
+                    'Montant restant affiché : ${_formatPrice(remaining)}',
+                    style: const TextStyle(color: _textDark, fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Les montants proposés sont des suggestions. Le backend vérifie le montant disponible final.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(fontSize: 12, color: _textMuted),
                   ),
                   if (suggestions.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -261,6 +278,10 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
                       children: suggestions
                           .map((s) => ActionChip(
                                 label: Text(_formatPrice(s.toDouble())),
+                                labelStyle: const TextStyle(color: _orangePrimary, fontWeight: FontWeight.w600),
+                                backgroundColor: _orangePrimary.withValues(alpha: 0.08),
+                                side: BorderSide(color: _orangePrimary.withValues(alpha: 0.25)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 onPressed: () {
                                   controller.text = s.toString();
                                   setDialogState(() => errorText = null);
@@ -277,7 +298,29 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
                       labelText: 'Montant (FCFA)',
                       hintText: 'Ex. 1000',
                       errorText: errorText,
-                      border: const OutlineInputBorder(),
+                      labelStyle: const TextStyle(color: _textMuted),
+                      filled: true,
+                      fillColor: _offWhite,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _borderSoft),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _borderSoft),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _orangePrimary, width: 1.5),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
                     ),
                     onChanged: (_) => setDialogState(() => errorText = null),
                     onSubmitted: (_) => submit(),
@@ -286,8 +329,21 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Annuler')),
-              ElevatedButton(onPressed: submit, child: const Text('Continuer')),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                style: TextButton.styleFrom(foregroundColor: _textMuted),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _orangePrimary,
+                  foregroundColor: _white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Continuer'),
+              ),
             ],
           );
         },
@@ -303,13 +359,33 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Information importante'),
+        backgroundColor: _white,
+        surfaceTintColor: _white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Information importante',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
         content: Text(
           'Votre contribution de ${_formatPrice(amount)} participe au financement de l\'achat de cette promotion. Le bénéficiaire final du produit est le créateur de l\'équipe. Votre contribution ne vous donne pas de droit de propriété individuel sur le produit.',
+          style: const TextStyle(color: _textMuted, height: 1.4),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Annuler')),
-          ElevatedButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('J\'ai compris, payer')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            style: TextButton.styleFrom(foregroundColor: _textMuted),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _orangePrimary,
+              foregroundColor: _white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('J\'ai compris, payer'),
+          ),
         ],
       ),
     );
@@ -542,9 +618,18 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
     final team = _team;
 
     return Scaffold(
+      backgroundColor: _offWhite,
       appBar: AppBar(
+        backgroundColor: _white,
+        foregroundColor: _textDark,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: _white,
         leading: const BackArrow(),
-        title: const Text('Achat en équipe'),
+        title: const Text(
+          'Achat en équipe',
+          style: TextStyle(color: _textDark, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
             onPressed: (_isLoading || _isRefreshing) ? null : _refresh,
@@ -552,12 +637,16 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: _orangePrimary),
                   )
-                : const Icon(Icons.refresh),
+                : const Icon(Icons.refresh, color: _textDark),
             tooltip: 'Actualiser',
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _borderSoft),
+        ),
       ),
       body: _buildBody(auth, team),
     );
@@ -565,7 +654,7 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
 
   Widget _buildBody(AuthProvider auth, TeamPurchase? team) {
     if (_isLoading && team == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: _orangePrimary));
     }
     if (_error != null && team == null) {
       return Center(
@@ -574,10 +663,18 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_error!, textAlign: TextAlign.center),
+              Icon(Icons.error_outline_rounded, size: 48, color: _textMuted.withValues(alpha: 0.7)),
+              const SizedBox(height: 12),
+              Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: _textDark)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _loadFullTeam,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _orangePrimary,
+                  foregroundColor: _white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Réessayer'),
               ),
@@ -587,17 +684,29 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
       );
     }
     if (team == null) {
-      return const Center(child: Text('Équipe introuvable.'));
+      return Center(
+        child: Text(
+          'Équipe introuvable.',
+          style: TextStyle(color: _textMuted, fontSize: 16),
+        ),
+      );
     }
     return RefreshIndicator(
+      color: _orangePrimary,
       onRefresh: () => _loadFullTeam(initial: false),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         children: [
           if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              ),
+              child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
             ),
           if (_paymentStatusMessage != null)
             Padding(
@@ -663,44 +772,75 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
       onPressed: () => _openTeamChat(team),
       icon: const Icon(Icons.forum_outlined),
       label: const Text('Discuter en équipe'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _textDark,
+        side: const BorderSide(color: _borderSoft),
+        backgroundColor: _white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
   Widget _sectionTitle(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              color: _orangePrimary,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textDark),
+          ),
+        ],
       ),
     );
   }
 
   Widget _infoCard(List<Widget> children) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }
 
   Widget _row(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 2,
-            child: Text(label, style: const TextStyle(color: Colors.black54)),
+            child: Text(label, style: const TextStyle(color: _textMuted, fontSize: 13)),
           ),
           Expanded(
             flex: 3,
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, color: _textDark, fontSize: 14)),
           ),
         ],
       ),
@@ -710,34 +850,56 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
   Widget _buildInvitationCode(TeamPurchase team) {
     final code = team.invitationCode;
     final hasCode = code != null && code.trim().isNotEmpty;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Code d\'invitation', style: TextStyle(color: Colors.black54)),
-            const SizedBox(height: 6),
-            if (hasCode) ...[
-              SelectableText(
-                code,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Code d\'invitation', style: TextStyle(color: _textMuted, fontSize: 13)),
+          const SizedBox(height: 6),
+          if (hasCode) ...[
+            SelectableText(
+              code,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: _textDark,
               ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _copyInvitationCode(code),
-                icon: const Icon(Icons.copy),
-                label: const Text('Copier le code'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _copyInvitationCode(code),
+              icon: const Icon(Icons.copy),
+              label: const Text('Copier le code'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _orangePrimary,
+                side: BorderSide(color: _orangePrimary.withValues(alpha: 0.45)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            ] else
-              const Text('Code d\'invitation indisponible'),
-              const SizedBox(height: 6),
-              const Text(
-                'Partagez ce code pour permettre à un participant de retrouver et rejoindre cette équipe.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-          ],
-        ),
+            ),
+          ] else
+            const Text('Code d\'invitation indisponible', style: TextStyle(color: _textDark)),
+          const SizedBox(height: 6),
+          const Text(
+            'Partagez ce code pour permettre à un participant de retrouver et rejoindre cette équipe.',
+            style: TextStyle(fontSize: 12, color: _textMuted),
+          ),
+        ],
       ),
     );
   }
@@ -748,26 +910,45 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
     final remaining = team.remainingAmount;
     final progress = target > 0 ? (collected / target).clamp(0.0, 1.0) : 0.0;
     final percent = (progress * 100).toStringAsFixed(1);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _row('Montant cible', _formatPrice(target)),
-            _row('Montant confirmé collecté', _formatPrice(collected)),
-            _row('Montant restant', _formatPrice(remaining)),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: progress, minHeight: 10),
-            const SizedBox(height: 6),
-            Text('Progression : $percent %', style: const TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 4),
-            const Text(
-              'Le montant collecté correspond aux contributions confirmées.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _row('Montant cible', _formatPrice(target)),
+          _row('Montant confirmé collecté', _formatPrice(collected)),
+          _row('Montant restant', _formatPrice(remaining)),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: _borderSoft,
+              valueColor: const AlwaysStoppedAnimation<Color>(_orangePrimary),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          Text('Progression : $percent %', style: const TextStyle(fontWeight: FontWeight.w600, color: _textDark)),
+          const SizedBox(height: 4),
+          const Text(
+            'Le montant collecté correspond aux contributions confirmées.',
+            style: TextStyle(fontSize: 12, color: _textMuted),
+          ),
+        ],
       ),
     );
   }
@@ -777,46 +958,69 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
     final count = team.participantsCount;
     final participants = team.participants;
     final showList = participants.isNotEmpty || team.invitationCode != null;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _row('Participants', '$count / $max (créateur compris)'),
-            if (count >= max)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Text('10/10 participants', style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-            const SizedBox(height: 8),
-            if (!showList && count > 0)
-              const Text('Informations des participants indisponibles')
-            else if (participants.isEmpty)
-              const Text('Aucun participant affichable')
-            else
-              ...participants.map((p) {
-                final isCreator = team.creatorId != null && p.userId == team.creatorId;
-                final isMe = auth.user != null && auth.user!.id == p.userId;
-                final labels = <String>[
-                  if (isCreator) 'Créateur',
-                  if (isMe) 'Vous',
-                ];
-                final paid = p.confirmedAmountPaid;
-                return ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.person_outline),
-                  title: Text('Utilisateur #${p.userId}${labels.isNotEmpty ? ' (${labels.join(', ')})' : ''}'),
-                  subtitle: Text(
-                    'Montant payé (confirmé) : ${_formatPrice(paid)}'
-                    '${p.joinedAt != null ? '\nInscription : ${_formatDate(p.joinedAt)}' : ''}',
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _row('Participants', '$count / $max (créateur compris)'),
+          if (count >= max)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text('10/10 participants', style: TextStyle(fontWeight: FontWeight.w600, color: _orangePrimary)),
+            ),
+          const SizedBox(height: 8),
+          if (!showList && count > 0)
+            const Text('Informations des participants indisponibles', style: TextStyle(color: _textMuted))
+          else if (participants.isEmpty)
+            const Text('Aucun participant affichable', style: TextStyle(color: _textMuted))
+          else
+            ...participants.map((p) {
+              final isCreator = team.creatorId != null && p.userId == team.creatorId;
+              final isMe = auth.user != null && auth.user!.id == p.userId;
+              final labels = <String>[
+                if (isCreator) 'Créateur',
+                if (isMe) 'Vous',
+              ];
+              final paid = p.confirmedAmountPaid;
+              return ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _orangePrimary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                  isThreeLine: p.joinedAt != null,
-                );
-              }),
-          ],
-        ),
+                  child: const Icon(Icons.person_outline, color: _orangePrimary, size: 18),
+                ),
+                title: Text(
+                  'Utilisateur #${p.userId}${labels.isNotEmpty ? ' (${labels.join(', ')})' : ''}',
+                  style: const TextStyle(color: _textDark, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Montant payé (confirmé) : ${_formatPrice(paid)}'
+                  '${p.joinedAt != null ? '\nInscription : ${_formatDate(p.joinedAt)}' : ''}',
+                  style: const TextStyle(color: _textMuted),
+                ),
+                isThreeLine: p.joinedAt != null,
+              );
+            }),
+        ],
       ),
     );
   }
@@ -832,28 +1036,39 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
       color = Colors.red;
       detail = 'Cette équipe a expiré.';
     } else {
-      color = Colors.deepOrange;
+      color = _orangePrimary;
       detail = 'Équipe en cours.';
     }
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline, color: color),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-                  const SizedBox(height: 4),
-                  Text(detail),
-                ],
-              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderSoft),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+                const SizedBox(height: 4),
+                Text(detail, style: const TextStyle(color: _textMuted)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -900,7 +1115,16 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
         children: [
           _notice('Connectez-vous pour rejoindre cette équipe.'),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: () => context.go('/login'), child: const Text('Se connecter')),
+          OutlinedButton(
+            onPressed: () => context.go('/login'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _orangePrimary,
+              side: const BorderSide(color: _orangePrimary),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Se connecter'),
+          ),
         ],
       );
     }
@@ -920,9 +1144,15 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isContributing ? null : _showContributionDialog,
                 icon: _isContributing
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _white))
                     : const Icon(Icons.volunteer_activism),
                 label: Text(_isContributing ? 'Initialisation...' : 'Contribuer à l\'équipe'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _orangePrimary,
+                  foregroundColor: _white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             )
           else if (team.remainingAmount <= 0)
@@ -936,6 +1166,13 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
             onPressed: (_isRefreshing || _isLoading) ? null : _refresh,
             icon: const Icon(Icons.refresh),
             label: const Text('Actualiser le statut'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _textDark,
+              side: const BorderSide(color: _borderSoft),
+              backgroundColor: _white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ],
       );
@@ -952,9 +1189,15 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
       child: ElevatedButton.icon(
         onPressed: _isJoining ? null : _joinTeam,
         icon: _isJoining
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _white))
             : const Icon(Icons.group_add),
         label: Text(_isJoining ? 'Inscription...' : 'Rejoindre l\'équipe'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _orangePrimary,
+          foregroundColor: _white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }
@@ -964,10 +1207,11 @@ class _TeamPurchaseScreenState extends State<TeamPurchaseScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
+        color: _orangePrimary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _borderSoft),
       ),
-      child: Text(text),
+      child: Text(text, style: const TextStyle(color: _textDark, height: 1.35)),
     );
   }
 }
