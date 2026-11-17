@@ -21,6 +21,10 @@ class BackArrow extends StatelessWidget {
           return;
         }
 
+        if (path == '/certification-info-form') {
+          context.go('/profile');
+          return;
+        }
 
         if (path == '/my-products') {
           context.go('/home');

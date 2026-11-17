@@ -1,12 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/cloudinary_storage_service.dart';
 import '../services/api_service.dart';
-import '../providers/auth_provider.dart';
-import '../utils/theme.dart';
 import '../widgets/back_arrow.dart';
 
 class CertificationInfoFormScreen extends StatefulWidget {
@@ -29,9 +26,65 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
   bool _isLoading = false;
   bool _isUploading = false;
   String? _errorMessage;
+  String? _statusMessage;
+  Map<String, dynamic>? _existingCertification;
 
   final ImagePicker _picker = ImagePicker();
   final CloudinaryStorageService _cloudinary = CloudinaryStorageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingCertification();
+  }
+
+  Future<void> _loadExistingCertification() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final response = await ApiService.instance.getUserCertificationInfo();
+      if (!mounted) return;
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        setState(() {
+          _existingCertification = data;
+          _boutiqueNomController.text = data['boutiqueNom'] ?? '';
+          _telephoneController.text = data['telephone'] ?? '';
+          _lieuController.text = data['lieu'] ?? '';
+          _statusMessage = _getStatusMessage(data['status'] ?? 'pending');
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      // 404 = no existing request, that's fine
+      if (e.toString().contains('404')) {
+        setState(() {
+          _statusMessage = null;
+        });
+      } else {
+        setState(() => _errorMessage = 'Erreur lors du chargement: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _getStatusMessage(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Votre demande est en attente de traitement par l\'équipe DJASSACI.';
+      case 'approved':
+        return 'Votre demande a été approuvée ! Votre boutique est certifiée.';
+      case 'rejected':
+        return 'Votre demande a été refusée. Vous pouvez la modifier et la renvoyer.';
+      default:
+        return 'Statut: $status';
+    }
+  }
 
   Future<void> _pickImage(ImageSource source, Function(File) onImageSelected) async {
     try {
@@ -89,6 +142,12 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
       return;
     }
 
+    // Prevent modifying an already approved request
+    if (_existingCertification != null && _existingCertification!['status'] == 'approved') {
+      setState(() => _errorMessage = 'Cette demande a déjà été approuvée et ne peut plus être modifiée');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _isUploading = true;
@@ -111,7 +170,7 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
 
       setState(() => _isUploading = false);
 
-      final response = await ApiService.instance.saveCertificationInfo(
+      final response = await ApiService.instance.saveUserCertificationInfo(
         boutiqueNom: _boutiqueNomController.text.trim(),
         rectoCiUrl: rectoUrl,
         versoCiUrl: versoUrl,
@@ -129,8 +188,9 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
             backgroundColor: Colors.green,
           ),
         );
-        _clearForm();
-        context.pop();
+
+        // Open WhatsApp with pre-filled message
+        await _openWhatsApp();
       } else {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
@@ -147,16 +207,45 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
     }
   }
 
-  void _clearForm() {
-    _boutiqueNomController.clear();
-    _telephoneController.clear();
-    _lieuController.clear();
-    _rectoCiImage = null;
-    _versoCiImage = null;
-    _photoVendeurImage = null;
+  Future<void> _openWhatsApp() async {
+    const message = '''Bonjour l'équipe DJASSACI 👋
+
+Je viens de remplir et d'enregistrer mes informations pour ma demande de certification vendeur.
+
+Je suis disponible pour répondre aux questions et effectuer les autres étapes nécessaires afin d'obtenir la certification de ma boutique.
+
+Merci de m'accompagner dans cette démarche. 😊''';
+
+    final phone = '2250715926401';
+    final url = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+    );
+
+    try {
+      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Demande enregistrée. Impossible d\'ouvrir WhatsApp. Contactez le $phone'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Demande enregistrée. Erreur WhatsApp: $e. Contactez le $phone'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 
-  Widget _buildImagePicker(String label, File? image, VoidCallback onTap) {
+  Widget _buildImagePicker(String label, File? image, VoidCallback? onTap, {String? existingUrl}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -177,17 +266,37 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                     borderRadius: BorderRadius.circular(10),
                     child: Image.file(image, fit: BoxFit.cover, width: double.infinity),
                   )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_a_photo, size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Appuyez pour ajouter une image',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                : (existingUrl != null && existingUrl.isNotEmpty)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          existingUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image, size: 48, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Image non disponible',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo, size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 8),
+                          Text(
+                            onTap != null ? 'Appuyez pour ajouter une image' : 'Image enregistrée',
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
           ),
         ),
         const SizedBox(height: 16),
@@ -205,6 +314,9 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
 
   @override
   Widget build(BuildContext context) {
+    final isApproved = _existingCertification != null && _existingCertification!['status'] == 'approved';
+    final hasExisting = _existingCertification != null;
+
     return Scaffold(
       appBar: AppBar(
         leading: const BackArrow(),
@@ -234,8 +346,77 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                           style: TextStyle(color: Colors.red.shade700),
                         ),
                       ),
+                    if (_statusMessage != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: isApproved ? Colors.green.shade50 : Colors.blue.shade50,
+                          border: Border.all(color: isApproved ? Colors.green.shade200 : Colors.blue.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isApproved ? Icons.verified : Icons.hourglass_empty,
+                              color: isApproved ? Colors.green.shade700 : Colors.blue.shade700,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _statusMessage!,
+                                style: TextStyle(
+                                  color: isApproved ? Colors.green.shade700 : Colors.blue.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (hasExisting && !isApproved)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          border: Border.all(color: Colors.orange.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange.shade700),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Vous avez déjà une demande en cours. Vous pouvez la modifier ci-dessous.',
+                                style: TextStyle(color: Colors.orange.shade700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (isApproved)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          border: Border.all(color: Colors.green.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Votre boutique est certifiée. Aucune modification n\'est possible.',
+                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     TextFormField(
                       controller: _boutiqueNomController,
+                      enabled: !isApproved,
                       decoration: const InputDecoration(
                         labelText: 'Nom de la boutique *',
                         border: OutlineInputBorder(),
@@ -251,6 +432,7 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _telephoneController,
+                      enabled: !isApproved,
                       decoration: const InputDecoration(
                         labelText: 'Numéro de téléphone joignable *',
                         border: OutlineInputBorder(),
@@ -267,6 +449,7 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _lieuController,
+                      enabled: !isApproved,
                       decoration: const InputDecoration(
                         labelText: 'Lieu du vendeur *',
                         border: OutlineInputBorder(),
@@ -288,24 +471,27 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                     _buildImagePicker(
                       'Recto de la pièce d\'identité *',
                       _rectoCiImage,
-                      () => _showImageSourceDialog((img) => setState(() => _rectoCiImage = img)),
+                      isApproved ? null : () => _showImageSourceDialog((img) => setState(() => _rectoCiImage = img)),
+                      existingUrl: hasExisting ? _existingCertification!['rectoCiUrl'] : null,
                     ),
                     _buildImagePicker(
                       'Verso de la pièce d\'identité *',
                       _versoCiImage,
-                      () => _showImageSourceDialog((img) => setState(() => _versoCiImage = img)),
+                      isApproved ? null : () => _showImageSourceDialog((img) => setState(() => _versoCiImage = img)),
+                      existingUrl: hasExisting ? _existingCertification!['versoCiUrl'] : null,
                     ),
                     _buildImagePicker(
                       'Photo du vendeur *',
                       _photoVendeurImage,
-                      () => _showImageSourceDialog((img) => setState(() => _photoVendeurImage = img)),
+                      isApproved ? null : () => _showImageSourceDialog((img) => setState(() => _photoVendeurImage = img)),
+                      existingUrl: hasExisting ? _existingCertification!['photoVendeurUrl'] : null,
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton.icon(
-                        onPressed: (_isLoading || _isUploading) ? null : _saveCertificationInfo,
+                        onPressed: (isApproved || _isLoading || _isUploading) ? null : _saveCertificationInfo,
                         icon: _isUploading
                             ? const SizedBox(
                                 width: 20,
@@ -324,11 +510,13 @@ class _CertificationInfoFormScreenState extends State<CertificationInfoFormScree
                               ? 'Téléversement des images...'
                               : _isLoading
                                   ? 'Enregistrement...'
-                                  : 'Enregistrer les informations',
+                                  : isApproved
+                                      ? 'Certifiée - Non modifiable'
+                                      : 'Enregistrer les informations',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
+                          backgroundColor: isApproved ? Colors.grey : Colors.orange,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),

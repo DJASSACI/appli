@@ -158,6 +158,40 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
     }
   }
 
+  // ===== User certification info (non-admin) =====
+  Future<Response> saveUserCertificationInfo({
+    required String boutiqueNom,
+    required String rectoCiUrl,
+    required String versoCiUrl,
+    required String lieu,
+    required String photoVendeurUrl,
+    required String telephone,
+  }) async {
+    try {
+      return await _dio.post(
+        '/api/users/certification-info',
+        data: {
+          'boutiqueNom': boutiqueNom,
+          'rectoCiUrl': rectoCiUrl,
+          'versoCiUrl': versoCiUrl,
+          'lieu': lieu,
+          'photoVendeurUrl': photoVendeurUrl,
+          'telephone': telephone,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Response> getUserCertificationInfo() async {
+    try {
+      return await _dio.get('/api/users/certification-info');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // ===== Team purchase (achat en equipe) =====
   // Backend derives creatorId/participantId from JWT; do not send them.
 
@@ -246,5 +280,34 @@ static Future<Response> createOrder(Map<String, dynamic> data) async {
 
   Future<Response> getMySavingsPlans() async {
     return await _dio.get('/api/my/savings');
+  }
+
+  // ===== Notifications persistantes =====
+  // GET /api/notifications — Liste paginée
+  Future<Response> getNotifications({int limit = 20, int offset = 0}) async {
+    return await _dio.get(
+      '/api/notifications',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+  }
+
+  // GET /api/notifications/unread-count — Nombre non lues
+  Future<Response> getUnreadCount() async {
+    return await _dio.get('/api/notifications/unread-count');
+  }
+
+  // PUT /api/notifications/:id/read — Marquer comme lue
+  Future<Response> markNotificationRead(int notificationId) async {
+    return await _dio.put('/api/notifications/$notificationId/read');
+  }
+
+  // PUT /api/notifications/read-all — Tout marquer comme lu
+  Future<Response> markAllNotificationsRead() async {
+    return await _dio.put('/api/notifications/read-all');
+  }
+
+  // DELETE /api/notifications/:id — Supprimer
+  Future<Response> deleteNotification(int notificationId) async {
+    return await _dio.delete('/api/notifications/$notificationId');
   }
 }

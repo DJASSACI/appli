@@ -6,17 +6,21 @@ import 'api_service.dart';
 
 /// Gestion compteurs/badges notifications + routage clic FCM/local (additif).
 /// Préserve les notifiers/clefs existants (promotions, commandes).
+/// Ajoute le support des notifications persistantes backend.
 class NotificationService {
   static const String _orderUnreadKey = 'order_unread_count';
   static const String _promoUnreadKey = 'promo_unread_count';
   static const String _orderNotifIdsKey = 'order_notif_ids';
   static const String _promoNotifIdsKey = 'promo_notif_ids';
   static const String _fcmTokenSentKey = 'fcm_token_last_sent';
+  static const String _persistentUnreadKey = 'persistent_unread_count';
 
   /// Notifier pour le badge des commandes (utilisé par HomeScreen).
   static final ValueNotifier<int> orderUnreadNotifier = ValueNotifier<int>(0);
   /// Notifier pour le badge des promotions (utilisé par HomeScreen).
   static final ValueNotifier<int> promoUnreadNotifier = ValueNotifier<int>(0);
+  /// Notifier pour le badge des notifications persistantes backend (cloche).
+  static final ValueNotifier<int> persistentUnreadNotifier = ValueNotifier<int>(0);
 
   /// Intention de navigation différée (notif cliquée alors que l'utilisateur
   /// n'est pas authentifié). Consommée après connexion réussie.
@@ -370,5 +374,65 @@ class NotificationService {
       await prefs.remove(_orderNotifIdsKey);
       orderUnreadNotifier.value = 0;
     } catch (_) {}
+  }
+
+  // ===== Notifications persistantes (backend) =====
+
+  /// Synchronise le compteur de notifications persistantes non lues avec le backend.
+  /// Appelé après login, refresh, marquage lu, suppression, changement de compte.
+  static Future<void> syncPersistentUnreadCount() async {
+    try {
+      if (!ApiService.instanceHasToken()) {
+        persistentUnreadNotifier.value = 0;
+        return;
+      }
+      final response = await ApiService.instance.getUnreadCount();
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final count = data['unreadCount'] is int ? data['unreadCount'] as int : 0;
+        persistentUnreadNotifier.value = count;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_persistentUnreadKey, count);
+      }
+    } catch (_) {
+      // Non bloquant : on garde la valeur locale en cas d'erreur réseau
+    }
+  }
+
+  /// Initialise le notifier persistant depuis le stockage local.
+  /// À appeler au démarrage de l'app (après initNotifiers).
+  static Future<void> initPersistentNotifier() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final count = prefs.getInt(_persistentUnreadKey) ?? 0;
+      persistentUnreadNotifier.value = count;
+    } catch (_) {
+      persistentUnreadNotifier.value = 0;
+    }
+  }
+
+  /// Réinitialise le compteur persistant (logout / changement de compte).
+  /// Ne supprime PAS les notifications sur le serveur.
+  static Future<void> resetPersistentUnread() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_persistentUnreadKey);
+      persistentUnreadNotifier.value = 0;
+    } catch (_) {
+      persistentUnreadNotifier.value = 0;
+    }
+  }
+
+  /// Décrémente le compteur persistant localement (optimiste) après marquage lu individuel.
+  static void decrementPersistentUnread() {
+    final current = persistentUnreadNotifier.value;
+    if (current > 0) {
+      persistentUnreadNotifier.value = current - 1;
+    }
+  }
+
+  /// Remet le compteur persistant à zéro localement (optimiste) après "Tout marquer comme lu".
+  static void resetPersistentUnreadLocal() {
+    persistentUnreadNotifier.value = 0;
   }
 }

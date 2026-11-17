@@ -55,6 +55,7 @@ import '../screens/team_hub_screen.dart';
 import '../screens/team_chat_screen.dart';
 import '../screens/services_screen.dart';
 import '../screens/mawa_chat_screen.dart';
+import '../screens/notifications_screen.dart';
 import '../models/product.dart';
 import '../models/promotion.dart';
 import '../models/promotion_savings.dart';
@@ -175,6 +176,10 @@ GoRoute(
       builder: (context, state) => const CertificationInfoFormScreen(),
     ),
     GoRoute(
+      path: '/certification-info-form',
+      builder: (context, state) => const CertificationInfoFormScreen(),
+    ),
+    GoRoute(
       path: '/admin/certified-list',
       builder: (context, state) => const CertifiedListScreen(),
     ),
@@ -217,6 +222,10 @@ GoRoute(
     GoRoute(
       path: '/my-savings-plans',
       builder: (context, state) => const MySavingsPlansScreen(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationsScreen(),
     ),
     GoRoute(
       path: '/promotions',

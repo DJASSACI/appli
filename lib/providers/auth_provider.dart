@@ -28,6 +28,7 @@ class AuthProvider with ChangeNotifier {
       final data = await authService.login(numero: numero, password: password);
       authService.apiService.setToken(data['token']);
       _user = User.fromJson(data['user']);
+      await NotificationService.syncPersistentUnreadCount();
       return true;
     } catch (e) {
       final msg = e.toString().toLowerCase();
@@ -75,6 +76,7 @@ class AuthProvider with ChangeNotifier {
       );
       authService.apiService.setToken(data['token']);
       _user = User.fromJson(data['user']);
+      await NotificationService.syncPersistentUnreadCount();
       NotificationService.consumePendingRouteIfAuthenticated();
       return true;
     } catch (e) {
@@ -118,6 +120,7 @@ class AuthProvider with ChangeNotifier {
       if (_user != null) {
         // ignore: unawaited_futures
         authService.syncFcmTokenIfAuthenticated();
+        await NotificationService.syncPersistentUnreadCount();
       }
     } catch (_) {
       _user = null;
@@ -150,6 +153,7 @@ class AuthProvider with ChangeNotifier {
       await authService.storageService.saveUserData(freshUser.toJson());
       // ignore: unawaited_futures
       authService.syncFcmTokenIfAuthenticated();
+      await NotificationService.syncPersistentUnreadCount();
     } catch (_) {
       // non-blocking
     }
@@ -161,6 +165,9 @@ class AuthProvider with ChangeNotifier {
 
     try {
       _user = await authService.getCurrentUser();
+      if (_user != null) {
+        await NotificationService.syncPersistentUnreadCount();
+      }
     } catch (e) {
       _user = null;
     } finally {
@@ -174,6 +181,7 @@ class AuthProvider with ChangeNotifier {
     // (P4) purge cache sync FCM pour éviter association token->mauvais compte au prochain login
     await NotificationService.invalidateFcmTokenSyncCache();
     NotificationService.clearPendingRoute();
+    await NotificationService.resetPersistentUnread();
     _user = null;
     notifyListeners();
   }

@@ -503,32 +503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
-                onPressed: () async {
-                  await showDialog<void>(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      title: const Text('Devenir boutique certifiée'),
-                      content: const Text('Vous allez être redirigé vers WhatsApp pour demander la certification de votre boutique. Certaines informations et justificatifs pourront vous être demandés afin de vérifier votre identité et les informations de votre boutique.'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Annuler')),
-                        TextButton(
-                          onPressed: () async {
-                            Navigator.of(dialogContext).pop();
-                            try {
-                              await ApiService.instance.post('/api/users/refresh-seller-verified', data: {});
-                            } catch (_) {}
-                            final nomVendeur = user.nom.trim();
-                            final message = 'Bonjour l\'équipe Djassa-ci, je souhaite certifier ma boutique. Voici mon nom de vendeur : $nomVendeur';
-                            const adminPhone = '+2250715926401';
-                            final url = Uri.parse('whatsapp://send?phone=$adminPhone&text=${Uri.encodeComponent(message)}');
-                            await launchUrl(url);
-                          },
-                          child: const Text('Continuer'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                onPressed: () => context.go('/certification-info-form'),
                 icon: const Icon(Icons.verified_user),
                 label: const Text('Devenir boutique certifiée'),
               ),

@@ -14,6 +14,7 @@ import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../widgets/certification_banner.dart';
+import '../widgets/notification_bell.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -192,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => context.go('/sell'),
             buttonSize: iconButtonSize,
           ),
+          const NotificationBell(),
           _buildAppBarActionButton(
             icon: Icons.person,
             tooltip: 'Profil',

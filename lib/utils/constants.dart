@@ -30,6 +30,13 @@ const String endpointContact = '/api/contact';
 const String endpointHealth = '/api/health';
 const String endpointStats = '/api/stats';
 
+/// Notifications persistantes
+const String endpointNotifications = '/api/notifications';
+const String endpointNotificationsUnreadCount = '/api/notifications/unread-count';
+const String endpointNotificationsRead = '/api/notifications/'; // + id + /read
+const String endpointNotificationsReadAll = '/api/notifications/read-all';
+const String endpointNotificationsDelete = '/api/notifications/'; // + id
+
 /// Colors
 const primaryColor = Color(0xFF6C5CE7);
 const secondaryColor = Color(0xFFFF7675);

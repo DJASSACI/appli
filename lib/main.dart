@@ -191,6 +191,7 @@ void main() async {
   final sessionData = await initializeSession();
   await MawaService.initUnreadNotifier();
   await NotificationService.initNotifiers();
+  await NotificationService.initPersistentNotifier();
 
   // Sync token FCM si session restaurée (JWT déjà injecté)
   if (sessionData != null && sessionData['token'] != null) {
